@@ -21,6 +21,16 @@ const r2Hostname = getR2Hostname();
 // Server-side only (no NEXT_PUBLIC_ prefix) — the browser never sees it.
 const backendUrl = process.env.BACKEND_API_URL?.trim().replace(/\/+$/, "");
 
+if (!backendUrl) {
+  // Without this, rewrites() below returns an empty array and every
+  // "/api/..." call from the browser 404s against our own server
+  // instead of reaching the backend — a confusing failure mode with no
+  // error message pointing at the actual cause. Warn loudly instead.
+  console.warn(
+    "\n⚠️  BACKEND_API_URL is not set — API requests will 404. Copy .env.example to .env.local and fill it in.\n",
+  );
+}
+
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: r2Hostname

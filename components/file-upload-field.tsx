@@ -7,7 +7,7 @@ import { FieldDescription } from "@/components/ui/field";
 
 interface FileUploadFieldProps {
   id?: string;
-  kind: "cover" | "attachment";
+  kind: "cover" | "attachment" | "cv";
   // The file picked in this session, not yet uploaded — owned by the
   // parent form. Nothing is sent to R2 until the parent's submit handler
   // actually uploads it (see WorkFormWrite / WorkFormEdit).

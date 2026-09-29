@@ -1,29 +1,17 @@
 "use client";
 
-// import { SignupForm } from "@/components/signup-form"
-import { useAuth } from "@/context/AuthContext";
+// Browsing jobs doesn't require an account, so the root path just goes
+// straight to the public /jobs list rather than forcing a sign-in first.
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { SiteLoader } from "@/components/site-loader";
 
 export default function RootPage() {
-  const { user, isLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (isLoading) return;
+    router.replace("/jobs");
+  }, [router]);
 
-    if (!user) {
-      router.replace("/auth/signin");
-    } else {
-      console.log(user);
-      router.replace("/home");
-    }
-  }, [user, router, isLoading]);
-
-  if (user || isLoading) {
-    return <SiteLoader />;
-  }
-
-  return;
+  return <SiteLoader />;
 }

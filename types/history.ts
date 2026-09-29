@@ -1,14 +1,11 @@
-import { Work } from "@/types/work";
+import { JobSummary } from "@/types/job";
 
-// A single reading-history entry, as returned inside GET /history's
-// "items" array.
-//
-// ASSUMPTION (not confirmed against a real API response — same caveat as
-// types/bookmark.ts): "work" is populated into the full Work shape.
+// A single viewing-history entry, as returned inside GET /history's
+// "items". One per (user, job) pair — viewing the same job again
+// updates last_read_at rather than creating a new entry (see
+// history.controller.createOrUpdate's upsert).
 export interface HistoryEntry {
   id: string;
-  work: Work;
+  job: JobSummary;
   last_read_at: string;
-  createdAt: string;
-  updatedAt: string;
 }

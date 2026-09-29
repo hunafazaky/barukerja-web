@@ -5,8 +5,9 @@ import { getUploadRules } from "@/lib/upload-constraints";
 
 // Route Handlers run on the server (Node.js runtime by default in
 // Next.js), so it's safe to use the real R2 secret key here — it never
-// reaches the browser. Compare this to NEXT_PUBLIC_API_URL elsewhere in
-// the app, which is intentionally public.
+// reaches the browser. Compare this to BACKEND_API_URL in
+// next.config.ts, which is the same idea for the main backend: kept
+// server-side only, never exposed to the client.
 function getR2Client() {
   const accountId = process.env.CLOUDFLARE_R2_ACCOUNT_ID;
   const accessKeyId = process.env.CLOUDFLARE_R2_ACCESS_KEY_ID;
@@ -14,7 +15,7 @@ function getR2Client() {
 
   if (!accountId || !accessKeyId || !secretAccessKey) {
     throw new Error(
-      "Cloudflare R2 environment variables are missing. Copy .env.local.example to .env.local and fill in the CLOUDFLARE_R2_* values.",
+      "Cloudflare R2 environment variables are missing. Copy .env.example to .env.local and fill in the CLOUDFLARE_R2_* values.",
     );
   }
 
@@ -50,7 +51,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (kind !== "cover" && kind !== "attachment") {
+  if (kind !== "cover" && kind !== "attachment" && kind !== "cv") {
     return NextResponse.json(
       { message: "Invalid upload kind." },
       { status: 400 },
@@ -68,7 +69,9 @@ export async function POST(request: NextRequest) {
         message:
           kind === "cover"
             ? "Cover must be a JPEG, PNG, WEBP, or GIF image."
-            : "Attachment must be a PDF file.",
+            : kind === "cv"
+              ? "CV must be a PDF file."
+              : "Attachment must be a PDF file.",
       },
       { status: 400 },
     );
@@ -88,8 +91,26 @@ export async function POST(request: NextRequest) {
   // A random key instead of the original filename — avoids collisions
   // between different users uploading files with the same name, and
   // avoids leaking the original filename if that matters to anyone.
+  //
+  // CVs live under their own prefix, separate from "covers"/"attachments".
+  // Those two are meant to be publicly readable (see the public-URL logic
+  // below) — CVs are not: they contain personal data, so they're only
+  // ever handed out via a short-lived signed URL (see
+  // application.controller.getCvDownloadUrl on the API). This route
+  // deliberately does NOT build or return a public URL for kind "cv" —
+  // only the relative key, which is what POST /applications' cv_key
+  // field expects. Whatever bucket this points at, its bucket policy
+  // needs to keep the "applications/cvs/" prefix non-public while
+  // "covers/"/"attachments/" stay public — that's an infra setting, not
+  // something this route can enforce on its own.
+  const keyPrefix =
+    kind === "cover"
+      ? "covers"
+      : kind === "cv"
+        ? "applications/cvs"
+        : "attachments";
   const extension = file.name.includes(".") ? file.name.split(".").pop() : undefined;
-  const key = `${kind === "cover" ? "covers" : "attachments"}/${randomUUID()}${extension ? `.${extension}` : ""}`;
+  const key = `${keyPrefix}/${randomUUID()}${extension ? `.${extension}` : ""}`;
 
   try {
     const client = getR2Client();
@@ -107,6 +128,12 @@ export async function POST(request: NextRequest) {
       { message: "Upload failed. Please try again." },
       { status: 502 },
     );
+  }
+
+  if (kind === "cv") {
+    // No public URL — see the comment above. The caller uses `key`
+    // directly as the application's cv_key.
+    return NextResponse.json({ key });
   }
 
   // Build the public URL, and validate it BEFORE sending it back.

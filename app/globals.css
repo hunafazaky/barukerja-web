@@ -4,12 +4,39 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ==================================================
+   BaruKerja design tokens.
+   Flat design, tuned for long-form reading (job descriptions), not just
+   UI chrome — see CLAUDE.md for the full rationale. These sit alongside
+   the shadcn theme tokens below rather than replacing them; new
+   BaruKerja-specific UI should reach for these directly
+   (bg-[var(--color-bg)], text-[var(--color-danger)], etc.) instead of
+   the generic shadcn primary/destructive tokens, which stay in place
+   for the shadcn/ui primitives that already use them.
+   ================================================== */
+:root {
+  --color-bg: #faf9f9;
+  --color-text: #1c2321;
+  --color-text-muted: #6b6f6d;
+  --color-border: #dad6cc;
+  --color-accent: #1f6f54;
+  --color-accent-secondary: #b98900;
+  --color-danger: #b3412f;
+
+  /* The base shadcn tokens were never set for light mode in this file
+     (only .dark defined them) — wire them to the BaruKerja tokens above
+     so bg-background/text-foreground utilities carry the flat palette
+     everywhere, not just in components written to use --color-* directly. */
+  --background: var(--color-bg);
+  --foreground: var(--color-text);
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-archivo);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);

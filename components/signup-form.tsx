@@ -13,7 +13,6 @@ import {
 import { Input } from "@/components/ui/input";
 
 // My Import
-import Image from "next/image";
 import Link from "next/link";
 import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
@@ -31,8 +30,9 @@ export function SignupForm({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  // Optional field — backend generates a pen_name from the email if left empty.
-  const [penName, setPenName] = useState("");
+  // Optional field — backend generates a display_name from the email if left empty.
+  const [displayName, setDisplayName] = useState("");
+  const [role, setRole] = useState<"seeker" | "employer">("seeker");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -55,10 +55,11 @@ export function SignupForm({
       await signup({
         email,
         password,
-        // Only send pen_name if the user actually typed one.
-        ...(penName.trim() ? { pen_name: penName.trim() } : {}),
+        role,
+        // Only send display_name if the user actually typed one.
+        ...(displayName.trim() ? { display_name: displayName.trim() } : {}),
       });
-      router.push("/home");
+      router.push("/jobs");
     } catch (err) {
       if (err instanceof ApiError) {
         setErrorMessage(err.message);
@@ -88,9 +89,11 @@ export function SignupForm({
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <h1 className="text-center md:text-6xl text-4xl">Reading Platform</h1>
-      <Card className="overflow-hidden p-0">
-        <CardContent className="grid p-0 md:grid-cols-2">
+      <h1 className="text-center md:text-6xl text-4xl font-black" style={{ fontFamily: "var(--font-heading)" }}>
+        BaruKerja
+      </h1>
+      <Card className="overflow-hidden p-0 mx-auto w-full max-w-md">
+        <CardContent className="p-0">
           <form className="p-6 md:p-8" onSubmit={handleSubmit}>
             <FieldGroup>
               <div className="flex flex-col items-center gap-2 text-center">
@@ -120,19 +123,64 @@ export function SignupForm({
                 )}
               </Field>
               <Field>
-                <FieldLabel htmlFor="pen_name">Pen Name</FieldLabel>
+                <FieldLabel htmlFor="display_name">Full name</FieldLabel>
                 <Input
-                  id="pen_name"
+                  id="display_name"
                   type="text"
-                  placeholder="Mr. Example"
-                  value={penName}
-                  onChange={(e) => setPenName(e.target.value)}
+                  placeholder="Jane Doe"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
                 />
-                {fieldErrors.pen_name && (
+                {fieldErrors.display_name && (
                   <FieldDescription className="text-destructive">
-                    {fieldErrors.pen_name}
+                    {fieldErrors.display_name}
                   </FieldDescription>
                 )}
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="role-seeker">I'm signing up to</FieldLabel>
+                <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-labelledby="role-seeker">
+                  <label
+                    htmlFor="role-seeker"
+                    className={cn(
+                      "flex cursor-pointer items-center justify-center rounded-md border px-3 py-2 text-sm",
+                      role === "seeker"
+                        ? "border-[var(--color-accent)] bg-[var(--color-accent)]/10 font-medium"
+                        : "border-border",
+                    )}
+                  >
+                    <input
+                      id="role-seeker"
+                      type="radio"
+                      name="role"
+                      value="seeker"
+                      checked={role === "seeker"}
+                      onChange={() => setRole("seeker")}
+                      className="sr-only"
+                    />
+                    Find a job
+                  </label>
+                  <label
+                    htmlFor="role-employer"
+                    className={cn(
+                      "flex cursor-pointer items-center justify-center rounded-md border px-3 py-2 text-sm",
+                      role === "employer"
+                        ? "border-[var(--color-accent)] bg-[var(--color-accent)]/10 font-medium"
+                        : "border-border",
+                    )}
+                  >
+                    <input
+                      id="role-employer"
+                      type="radio"
+                      name="role"
+                      value="employer"
+                      checked={role === "employer"}
+                      onChange={() => setRole("employer")}
+                      className="sr-only"
+                    />
+                    Hire people
+                  </label>
+                </div>
               </Field>
               <Field>
                 <Field className="grid grid-cols-2 gap-4">
@@ -224,15 +272,6 @@ export function SignupForm({
               </FieldDescription>
             </FieldGroup>
           </form>
-          <div className="relative hidden bg-muted md:block">
-            <Image
-              src="/book-image.svg"
-              width={100}
-              height={100}
-              alt="Image"
-              className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
-            />
-          </div>
         </CardContent>
       </Card>
       {/* <FieldDescription className="px-6 text-center">

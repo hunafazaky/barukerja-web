@@ -1,12 +1,15 @@
 // This matches what the backend returns for a User document.
 // See backend: app/models/user.model.js (toJSON transform turns _id into id,
 // and always strips the password field before sending it to the client).
+export type UserRole = "seeker" | "employer" | "admin";
+
 export interface User {
   id: string;
   email: string;
-  pen_name: string;
+  display_name: string;
   photo: string;
   bio: string;
+  role: UserRole;
   createdAt: string;
   updatedAt: string;
 }
@@ -33,7 +36,8 @@ export interface AuthResponse {
 export interface JwtPayload {
   id: string;
   email: string;
-  pen_name: string;
+  display_name: string;
+  role: UserRole;
   iat: number;
   exp: number;
 }

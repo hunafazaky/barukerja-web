@@ -13,10 +13,9 @@ import {
 import { Input } from "@/components/ui/input";
 
 // My Import
-import Image from "next/image";
 import Link from "next/link";
 import { useState, FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { ApiError } from "@/types/api";
 
@@ -26,6 +25,7 @@ export function SigninForm({
 }: React.ComponentProps<"div">) {
   const { signin } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Form field state.
   const [email, setEmail] = useState("");
@@ -43,7 +43,10 @@ export function SigninForm({
     try {
       await signin(email, password);
       // Signed in successfully — send the user to the home page.
-      router.push("/home");
+      const next = searchParams.get("next");
+      // Only ever redirect to a same-site relative path — never follow
+      // an absolute URL from the query string, to avoid an open redirect.
+      router.push(next && next.startsWith("/") ? next : "/jobs");
     } catch (err) {
       // ApiError messages come straight from the backend
       // (e.g. "Email or password is incorrect.", or a 429 rate-limit message).
@@ -63,9 +66,11 @@ export function SigninForm({
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <h1 className="text-center md:text-6xl text-4xl">Reading Platform</h1>
-      <Card className="overflow-hidden p-0 z-10">
-        <CardContent className="grid p-0 md:grid-cols-2">
+      <h1 className="text-center md:text-6xl text-4xl font-black" style={{ fontFamily: "var(--font-heading)" }}>
+        BaruKerja
+      </h1>
+      <Card className="overflow-hidden p-0 z-10 mx-auto w-full max-w-md">
+        <CardContent className="p-0">
           <form className="p-6 md:p-8" onSubmit={handleSubmit}>
             <FieldGroup>
               <div className="flex flex-col items-center gap-2 text-center">
@@ -162,15 +167,6 @@ export function SigninForm({
               </FieldDescription>
             </FieldGroup>
           </form>
-          <div className="relative hidden bg-muted md:block">
-            <Image
-              src="/book-image.svg"
-              width={100}
-              height={100}
-              alt="Image"
-              className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
-            />
-          </div>
         </CardContent>
       </Card>
       {/* <FieldDescription className="px-6 text-center">

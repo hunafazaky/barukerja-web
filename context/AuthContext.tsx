@@ -35,9 +35,10 @@ interface AuthContextValue {
   signup: (input: {
     email: string;
     password: string;
-    pen_name?: string;
+    display_name?: string;
     photo?: string;
     bio?: string;
+    role?: "seeker" | "employer";
   }) => Promise<void>;
   signout: () => Promise<void>;
 }
@@ -177,9 +178,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function signup(input: {
     email: string;
     password: string;
-    pen_name?: string;
+    display_name?: string;
     photo?: string;
     bio?: string;
+    role?: "seeker" | "employer";
   }) {
     const data = await apiSignup(input);
     const newUser = await loadUserFromToken(data.accessToken);

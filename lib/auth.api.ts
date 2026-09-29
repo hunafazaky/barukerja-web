@@ -15,14 +15,17 @@ export function signin(email: string, password: string): Promise<AuthResponse> {
 // ==================================================
 // Sign up a new account.
 // Backend route: POST /api/users/signup
-// pen_name, photo, bio are optional on the backend, so they're optional here too.
+// display_name, photo, bio are optional on the backend (role defaults to
+// "seeker" there too, but we always send it explicitly from the form so
+// the choice is never left to a default the user didn't make).
 // ==================================================
 export function signup(input: {
   email: string;
   password: string;
-  pen_name?: string;
+  display_name?: string;
   photo?: string;
   bio?: string;
+  role?: "seeker" | "employer";
 }): Promise<AuthResponse> {
   return apiFetch<AuthResponse>("/users/signup", {
     method: "POST",

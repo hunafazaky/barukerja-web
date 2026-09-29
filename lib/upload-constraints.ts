@@ -17,7 +17,7 @@ export const ALLOWED_IMAGE_TYPES = [
 // "Acceptable file is only pdf" — attachments are restricted to PDF only.
 export const ALLOWED_FILE_TYPES = ["application/pdf"];
 
-export function getUploadRules(kind: "cover" | "attachment") {
+export function getUploadRules(kind: "cover" | "attachment" | "cv") {
   return kind === "cover"
     ? { allowedTypes: ALLOWED_IMAGE_TYPES, maxSize: MAX_IMAGE_SIZE_BYTES }
     : { allowedTypes: ALLOWED_FILE_TYPES, maxSize: MAX_FILE_SIZE_BYTES };

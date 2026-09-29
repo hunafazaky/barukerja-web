@@ -1,17 +1,18 @@
 "use client";
 
+import { Suspense } from "react";
 import { SigninForm } from "@/components/signin-form";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
-export default function SigninPage() {
+function SigninPageContent() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (!isLoading && user) {
-      router.replace("/home");
+      router.replace("/jobs");
     }
   }, [user, router, isLoading]);
 
@@ -25,5 +26,13 @@ export default function SigninPage() {
         <SigninForm />
       </div>
     </div>
+  );
+}
+
+export default function SigninPage() {
+  return (
+    <Suspense fallback={null}>
+      <SigninPageContent />
+    </Suspense>
   );
 }

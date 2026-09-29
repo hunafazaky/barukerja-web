@@ -1,16 +1,17 @@
 import { ApiError, ApiErrorResponse } from "@/types/api";
 
-// Base URL comes from an environment variable so it's easy to change
-// between local development and production without touching the code.
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
-if (!API_URL) {
-  // This only throws during development if someone forgets to set up .env.local.
-  // It's better to fail loudly here than to get confusing "fetch failed" errors later.
-  throw new Error(
-    "NEXT_PUBLIC_API_URL is not set. Copy .env.local.example to .env.local and fill it in.",
-  );
-}
+// Every request goes to "/api/..." on THIS site — never straight to the
+// backend. next.config.ts rewrites that, server-side, to
+// `${BACKEND_API_URL}/api/...`. The browser never sees the real backend
+// origin, and because the response comes back from our own origin, the
+// refreshToken cookie is stored as a first-party cookie — not affected
+// by third-party-cookie blocking or SameSite rules the way a
+// cross-origin cookie would be.
+//
+// (There used to be a NEXT_PUBLIC_API_URL here that the browser called
+// directly, cross-origin. That's been replaced by this proxy — see
+// next.config.ts for where BACKEND_API_URL is actually configured.)
+const API_BASE = "/api";
 
 interface ApiFetchOptions {
   method?: "GET" | "POST" | "PATCH" | "DELETE";
@@ -64,7 +65,7 @@ function refreshAccessTokenOnce(): Promise<string | null> {
   if (!refreshPromise) {
     refreshPromise = (async () => {
       try {
-        const response = await fetch(`${API_URL}/users/refresh`, {
+        const response = await fetch(`${API_BASE}/users/refresh`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
@@ -89,7 +90,8 @@ function refreshAccessTokenOnce(): Promise<string | null> {
 // A single helper function used for every request to the backend.
 //
 // It takes care of:
-// - Building the full URL (API_URL + path)
+// - Building the full URL (API_BASE + path, proxied to the real backend
+//   by next.config.ts's rewrites — see the comment on API_BASE above)
 // - Sending cookies (needed for the refresh token cookie)
 // - Setting JSON headers and stringifying the body
 // - Attaching the "Authorization: Bearer <token>" header when we have one
@@ -110,12 +112,14 @@ export async function apiFetch<TResponse>(
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    const response = await fetch(`${API_URL}${path}`, {
+    const response = await fetch(`${API_BASE}${path}`, {
       method,
       headers,
-      // "include" tells the browser to send/receive cookies even though
-      // the frontend and backend are on different origins. This is required
-      // for the HttpOnly refresh token cookie to work.
+      // Same-origin now (see API_BASE above), so the browser would send
+      // this cookie by default anyway — "include" is kept explicit
+      // rather than relying on that default, since it costs nothing and
+      // protects against this code being copied somewhere cross-origin
+      // again later.
       credentials: "include",
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });

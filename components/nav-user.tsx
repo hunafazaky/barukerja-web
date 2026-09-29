@@ -37,9 +37,10 @@ export function NavUser() {
   const guestUser = {
     id: "001",
     email: "guest@example.com",
-    pen_name: "Guest",
+    display_name: "Guest",
     photo: "/globe.svg",
     bio: "Guest Account, Limited Access.",
+    role: "seeker" as const,
     createdAt: "",
     updatedAt: "",
   };
@@ -68,13 +69,13 @@ export function NavUser() {
               <Avatar className="size-8 rounded-lg grayscale">
                 <AvatarImage
                   src={user ? user.photo : guestUser.photo}
-                  alt={user ? user.pen_name : guestUser.pen_name}
+                  alt={user ? user.display_name : guestUser.display_name}
                 />
                 <AvatarFallback className="rounded-lg">RP</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">
-                  {user ? user.pen_name : guestUser.pen_name}
+                  {user ? user.display_name : guestUser.display_name}
                 </span>
                 <span className="truncate text-xs text-foreground/70">
                   {user ? user.email : guestUser.email}
@@ -94,13 +95,13 @@ export function NavUser() {
                     <Avatar className="size-8">
                       <AvatarImage
                         src={user ? user.photo : guestUser.photo}
-                        alt={user ? user.pen_name : guestUser.pen_name}
+                        alt={user ? user.display_name : guestUser.display_name}
                       />
                       <AvatarFallback className="rounded-lg">RP</AvatarFallback>
                     </Avatar>
                     <div className="grid flex-1 text-left text-sm leading-tight">
                       <span className="truncate font-medium">
-                        {user ? user.pen_name : guestUser.pen_name}
+                        {user ? user.display_name : guestUser.display_name}
                       </span>
                       <span className="truncate text-xs text-muted-foreground">
                         {user ? user.email : guestUser.email}

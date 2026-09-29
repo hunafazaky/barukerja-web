@@ -11,7 +11,7 @@ export default function SignupPage() {
 
   useEffect(() => {
     if (!isLoading && user) {
-      router.replace("/home");
+      router.replace("/jobs");
     }
   }, [user, router, isLoading]);
 

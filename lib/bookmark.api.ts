@@ -1,13 +1,13 @@
 import { apiFetch } from "@/lib/api";
 import { PaginatedResponse } from "@/types/api";
-import { Bookmark, ToggleBookmarkResponse } from "@/types/bookmark";
+import { Bookmark } from "@/types/bookmark";
 
 // ==================================================
-// List the signed-in user's bookmarks.
-// Backend route: GET /api/bookmarks (must be signed in)
+// List the signed-in user's bookmarked jobs.
+// Backend route: GET /api/bookmarks (requires sign-in)
 // ==================================================
-export function getBookmarks(
-  params: { page?: number; limit?: number } = {},
+export function getMyBookmarks(
+  params: { page?: number; limit?: number },
   accessToken: string,
 ): Promise<PaginatedResponse<Bookmark>> {
   const searchParams = new URLSearchParams();
@@ -22,15 +22,31 @@ export function getBookmarks(
 }
 
 // ==================================================
-// Add or remove a bookmark for a work — whichever applies. The backend
-// decides which one happens; we don't tell it which.
-// Backend route: POST /api/bookmarks/toggle/:workId (must be signed in)
+// Check whether the signed-in user has bookmarked a job.
+// Backend route: GET /api/bookmarks/check/:jobId (requires sign-in)
+//
+// Only needed on the job detail page — GET /jobs (list) already includes
+// a "bookmarked" flag per job, so list views don't need this.
+// ==================================================
+export function checkBookmark(
+  jobId: string,
+  accessToken: string,
+): Promise<{ is_bookmarked: boolean; bookmarkId: string | null }> {
+  return apiFetch(`/bookmarks/check/${jobId}`, { accessToken });
+}
+
+// ==================================================
+// Toggle a job's bookmark on/off for the signed-in user.
+// Backend route: POST /api/bookmarks/toggle/:jobId (requires sign-in)
+//
+// The backend itself decides add vs. remove based on current state —
+// there's no separate "add"/"remove" endpoint, just this one toggle.
 // ==================================================
 export function toggleBookmark(
-  workId: string,
+  jobId: string,
   accessToken: string,
-): Promise<ToggleBookmarkResponse> {
-  return apiFetch<ToggleBookmarkResponse>(`/bookmarks/toggle/${workId}`, {
+): Promise<{ is_bookmarked: boolean; message: string }> {
+  return apiFetch(`/bookmarks/toggle/${jobId}`, {
     method: "POST",
     accessToken,
   });
