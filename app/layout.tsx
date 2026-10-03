@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 // My Import
 import { AuthProvider } from "@/context/AuthContext";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { BottomNav } from "@/components/bottom-nav";
 
 // Atkinson Hyperlegible is the body/UI face — chosen specifically for
 // readability on long job descriptions, not as a stylistic pick (it was
@@ -49,9 +50,10 @@ export default function RootLayout({
         "font-sans",
       )}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col pb-16 md:pb-0">
         <AuthProvider>
           <TooltipProvider>{children}</TooltipProvider>
+          <BottomNav />
         </AuthProvider>
       </body>
     </html>

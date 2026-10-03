@@ -1,6 +1,6 @@
 import { apiFetch } from "@/lib/api";
 import { PaginatedResponse } from "@/types/api";
-import { Job, JobQueryParams } from "@/types/job";
+import { Job, JobFormInput, JobQueryParams, MyJob } from "@/types/job";
 
 // ==================================================
 // Turn a JobQueryParams object into a query string like
@@ -78,4 +78,82 @@ export function getJobById(
   accessToken?: string | null,
 ): Promise<Job> {
   return apiFetch<Job>(`/jobs/${id}`, { accessToken });
+}
+
+// ==================================================
+// List the signed-in employer's own posted jobs.
+// Backend route: GET /api/jobs/mine (requires sign-in, role: employer)
+// ==================================================
+export function getMyJobs(
+  params: { page?: number; limit?: number },
+  accessToken: string,
+): Promise<PaginatedResponse<MyJob>> {
+  const searchParams = new URLSearchParams();
+  if (params.page) searchParams.set("page", String(params.page));
+  if (params.limit) searchParams.set("limit", String(params.limit));
+  const queryString = searchParams.toString();
+
+  return apiFetch<PaginatedResponse<MyJob>>(
+    `/jobs/mine${queryString ? `?${queryString}` : ""}`,
+    { accessToken },
+  );
+}
+
+// ==================================================
+// Post a new job.
+// Backend route: POST /api/jobs (requires sign-in, role: employer)
+//
+// Fails with a 400 if the employer doesn't have a company profile yet
+// (the backend looks it up by the signed-in user, not by an id in the
+// body) — create one via lib/company.api.ts's createCompany first.
+//
+// Only `id` is typed on the returned job (not the full shape) — the
+// backend's create/update/remove responses populate different fields
+// inconsistently from each other and from GET /jobs/mine, so rather than
+// rely on any of them for display, callers should just navigate using
+// the id and let the destination page do its own fetch.
+// ==================================================
+export function createJob(
+  input: JobFormInput,
+  accessToken: string,
+): Promise<{ message: string; job: { id: string } }> {
+  return apiFetch(`/jobs`, {
+    method: "POST",
+    body: input,
+    accessToken,
+  });
+}
+
+// ==================================================
+// Update one of the signed-in employer's own jobs.
+// Backend route: PATCH /api/jobs/:id (requires sign-in, must own it)
+// ==================================================
+export function updateJob(
+  id: string,
+  input: Partial<JobFormInput>,
+  accessToken: string,
+): Promise<{ message: string; job: { id: string } }> {
+  return apiFetch(`/jobs/${id}`, {
+    method: "PATCH",
+    body: input,
+    accessToken,
+  });
+}
+
+// ==================================================
+// Delete one of the signed-in employer's own jobs.
+// Backend route: DELETE /api/jobs/:id (requires sign-in, must own it)
+//
+// Not always an actual delete — if the job already has applications, the
+// backend closes it instead of deleting it (so applicants don't lose
+// their application history), and says so in the response message.
+// ==================================================
+export function deleteJob(
+  id: string,
+  accessToken: string,
+): Promise<{ message: string; job?: { id: string; status: string } }> {
+  return apiFetch(`/jobs/${id}`, {
+    method: "DELETE",
+    accessToken,
+  });
 }

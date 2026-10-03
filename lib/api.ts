@@ -133,7 +133,11 @@ export async function apiFetch<TResponse>(
 
   let { response, data } = await send(accessToken);
 
-  if (!response.ok && accessToken && (data as ApiErrorResponse)?.code === "TOKEN_EXPIRED") {
+  if (
+    !response.ok &&
+    accessToken &&
+    (data as ApiErrorResponse)?.code === "TOKEN_EXPIRED"
+  ) {
     const newToken = await refreshAccessTokenOnce();
 
     if (newToken) {

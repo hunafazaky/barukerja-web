@@ -15,7 +15,8 @@ import { toggleBookmark } from "@/lib/bookmark.api";
 function BookmarkedPageContent() {
   const { accessToken } = useAuth();
   const [page, setPage] = usePageParam();
-  const { bookmarks, pagination, isLoading, error, refetch } = useBookmarks(page);
+  const { bookmarks, pagination, isLoading, error, refetch } =
+    useBookmarks(page);
 
   async function handleRemove(jobId: string) {
     if (!accessToken) return;
@@ -54,7 +55,10 @@ function BookmarkedPageContent() {
           </p>
         )}
 
-        <div className="divide-y" style={{ borderColor: "var(--color-border)" }}>
+        <div
+          className="divide-y"
+          style={{ borderColor: "var(--color-border)" }}
+        >
           {!isLoading &&
             !error &&
             bookmarks.map((bookmark, i) => (

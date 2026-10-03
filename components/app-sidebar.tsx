@@ -13,50 +13,29 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 
-import {
-  BriefcaseIcon,
-  BookmarkSimpleIcon,
-  ClockCounterClockwiseIcon,
-  FileTextIcon,
-} from "@phosphor-icons/react";
+import { BriefcaseIcon } from "@phosphor-icons/react";
 
 // My Import
 import { useAuth } from "@/context/AuthContext";
+import { getNavItems } from "@/lib/nav-items";
 import Link from "next/link";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   // My Const
   const { user } = useAuth();
-
-  // Employer-side dashboard links (company, posted jobs, applicant
-  // review) are a later pass — see CLAUDE.md's progress tracker — so an
-  // employer only sees "Browse jobs" for now, same as before this page
-  // existed. Nothing here is guessed at; each link only appears once
-  // its page actually exists.
-  const navMain =
-    user?.role === "seeker"
-      ? [
-          { title: "Browse jobs", url: "/jobs", icon: <BriefcaseIcon /> },
-          {
-            title: "My applications",
-            url: "/applications",
-            icon: <FileTextIcon />,
-          },
-          {
-            title: "Bookmarked",
-            url: "/bookmarked",
-            icon: <BookmarkSimpleIcon />,
-          },
-          {
-            title: "History",
-            url: "/history",
-            icon: <ClockCounterClockwiseIcon />,
-          },
-        ]
-      : [{ title: "Browse jobs", url: "/jobs", icon: <BriefcaseIcon /> }];
+  const navMain = getNavItems(user?.role);
 
   return (
-    <Sidebar collapsible="offcanvas" {...props}>
+    // Desktop only, functionally — components/bottom-nav.tsx covers the
+    // same nav destinations on mobile with a thumb-reachable tab bar
+    // instead of an offcanvas drawer. Note: `hidden md:flex` below does
+    // NOT hide this on mobile — this component's own isMobile branch
+    // renders a Sheet directly and never forwards className to it. What
+    // actually keeps it closed on mobile is site-header.tsx hiding the
+    // only SidebarTrigger that could set openMobile to true. The
+    // className is kept anyway as a correct-on-desktop no-op, not as
+    // the mechanism — don't rely on it to mean "hidden on mobile".
+    <Sidebar collapsible="offcanvas" className="hidden md:flex" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -73,9 +52,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
-      <SidebarContent>
-        {user && <NavMain items={navMain} />}
-      </SidebarContent>
+      <SidebarContent>{user && <NavMain items={navMain} />}</SidebarContent>
       <SidebarFooter>
         <NavUser />
       </SidebarFooter>

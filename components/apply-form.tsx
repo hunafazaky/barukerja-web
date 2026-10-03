@@ -81,7 +81,8 @@ export function ApplyForm({
 
       <div>
         <FieldLabel htmlFor="cover-letter">
-          Cover letter <span style={{ color: "var(--color-text-muted)" }}>(optional)</span>
+          Cover letter{" "}
+          <span style={{ color: "var(--color-text-muted)" }}>(optional)</span>
         </FieldLabel>
         <Textarea
           id="cover-letter"

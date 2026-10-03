@@ -89,7 +89,10 @@ export function SignupForm({
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <h1 className="text-center md:text-6xl text-4xl font-black" style={{ fontFamily: "var(--font-heading)" }}>
+      <h1
+        className="text-center md:text-6xl text-4xl font-black"
+        style={{ fontFamily: "var(--font-heading)" }}
+      >
         BaruKerja
       </h1>
       <Card className="overflow-hidden p-0 mx-auto w-full max-w-md">
@@ -139,7 +142,11 @@ export function SignupForm({
               </Field>
               <Field>
                 <FieldLabel htmlFor="role-seeker">I'm signing up to</FieldLabel>
-                <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-labelledby="role-seeker">
+                <div
+                  className="grid grid-cols-2 gap-3"
+                  role="radiogroup"
+                  aria-labelledby="role-seeker"
+                >
                   <label
                     htmlFor="role-seeker"
                     className={cn(
@@ -233,7 +240,7 @@ export function SignupForm({
                   {isSubmitting ? "Signing up..." : "Sign up"}
                 </Button>
               </Field>
-              
+
               {/* <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
                 Or continue with
               </FieldSeparator>
@@ -268,7 +275,8 @@ export function SignupForm({
               </Field> */}
 
               <FieldDescription className="text-center">
-                Already have an account? <Link href="/auth/signin">Sign in</Link>
+                Already have an account?{" "}
+                <Link href="/auth/signin">Sign in</Link>
               </FieldDescription>
             </FieldGroup>
           </form>

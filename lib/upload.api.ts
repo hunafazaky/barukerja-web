@@ -25,7 +25,7 @@ export interface UploadResult {
 // ==================================================
 export async function uploadFile(
   file: File,
-  kind: "cover" | "attachment" | "cv",
+  kind: "cover" | "attachment" | "cv" | "logo",
 ): Promise<UploadResult> {
   const formData = new FormData();
   formData.append("file", file);

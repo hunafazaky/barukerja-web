@@ -46,5 +46,11 @@ export function useApplications(page: number) {
     fetchApplications();
   }, [fetchApplications]);
 
-  return { applications, pagination, isLoading, error, refetch: fetchApplications };
+  return {
+    applications,
+    pagination,
+    isLoading,
+    error,
+    refetch: fetchApplications,
+  };
 }

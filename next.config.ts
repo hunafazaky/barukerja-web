@@ -19,7 +19,13 @@ const r2Hostname = getR2Hostname();
 // The real backend origin, WITHOUT a trailing slash and WITHOUT "/api".
 // e.g. https://hz-reading-platform.onrender.com
 // Server-side only (no NEXT_PUBLIC_ prefix) — the browser never sees it.
-const backendUrl = process.env.BACKEND_API_URL?.trim().replace(/\/+$/, "");
+const backendUrl = process.env.BACKEND_API_URL?.trim()
+  .replace(/\/+$/, "")
+  // The old NEXT_PUBLIC_API_URL value ended in "/api", so it's easy to
+  // paste that same value here. The rewrite below adds "/api" itself —
+  // leaving it on would forward to /api/api/... and the backend would
+  // answer "Route Not Found" for every request. Strip it defensively.
+  .replace(/\/api$/, "");
 
 if (!backendUrl) {
   // Without this, rewrites() below returns an empty array and every

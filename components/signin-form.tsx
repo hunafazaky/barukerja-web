@@ -66,7 +66,10 @@ export function SigninForm({
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <h1 className="text-center md:text-6xl text-4xl font-black" style={{ fontFamily: "var(--font-heading)" }}>
+      <h1
+        className="text-center md:text-6xl text-4xl font-black"
+        style={{ fontFamily: "var(--font-heading)" }}
+      >
         BaruKerja
       </h1>
       <Card className="overflow-hidden p-0 z-10 mx-auto w-full max-w-md">

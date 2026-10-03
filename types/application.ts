@@ -1,9 +1,5 @@
 export type ApplicationStatus =
-  | "applied"
-  | "reviewed"
-  | "interview"
-  | "accepted"
-  | "rejected";
+  "applied" | "reviewed" | "interview" | "accepted" | "rejected";
 
 // The trimmed-down job info GET /applications/mine populates onto each
 // application (.populate("job", "title company status")).
@@ -46,6 +42,22 @@ export interface ApplicationFormInput {
   jobId: string;
   cv_key: string;
   cover_letter?: string;
+}
+
+// The shape GET /applications/job/:jobId returns per item — notably
+// different from Application above: `job` is just the raw id (the
+// employer already knows which job, from the route), while `applicant`
+// IS populated (the whole point of this endpoint, for the employer's
+// applicant-review view).
+export interface JobApplicant {
+  id: string;
+  job: string;
+  applicant: ApplicationApplicant;
+  cv_key: string;
+  cover_letter: string;
+  status: ApplicationStatus;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Allowed status transitions, mirroring

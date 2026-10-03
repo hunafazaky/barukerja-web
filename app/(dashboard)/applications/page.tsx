@@ -11,7 +11,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/context/AuthContext";
 import { useApplications } from "@/hooks/use-applications";
 import { usePageParam } from "@/hooks/use-page-param";
-import { getApplicationCvUrl, withdrawApplication } from "@/lib/application.api";
+import {
+  getApplicationCvUrl,
+  withdrawApplication,
+} from "@/lib/application.api";
 import { ApplicationStatus } from "@/types/application";
 
 const STATUS_LABELS: Record<ApplicationStatus, string> = {
@@ -99,7 +102,10 @@ function ApplicationsPageContent() {
           </p>
         )}
 
-        <div className="divide-y" style={{ borderColor: "var(--color-border)" }}>
+        <div
+          className="divide-y"
+          style={{ borderColor: "var(--color-border)" }}
+        >
           {!isLoading &&
             !error &&
             applications.map((application, i) => (
@@ -124,7 +130,10 @@ function ApplicationsPageContent() {
                       {application.job.company.name}
                     </p>
                   </div>
-                  <Badge variant="outline" style={statusStyle(application.status)}>
+                  <Badge
+                    variant="outline"
+                    style={statusStyle(application.status)}
+                  >
                     {STATUS_LABELS[application.status]}
                   </Badge>
                 </div>

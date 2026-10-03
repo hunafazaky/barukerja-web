@@ -44,7 +44,10 @@ function HistoryPageContent() {
           </p>
         )}
 
-        <div className="divide-y" style={{ borderColor: "var(--color-border)" }}>
+        <div
+          className="divide-y"
+          style={{ borderColor: "var(--color-border)" }}
+        >
           {!isLoading &&
             !error &&
             entries.map((entry, i) => (

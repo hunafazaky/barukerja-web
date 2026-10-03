@@ -16,7 +16,15 @@ import { Button } from "./ui/button";
 // My Import
 import { useAuth } from "@/context/AuthContext";
 
-export function SignoutConfirmation() {
+// trigger lets callers swap in a different-looking button (e.g. a
+// compact icon-only one for the mobile header — see site-header.tsx)
+// while sharing the same confirm-before-signing-out flow. Defaults to
+// the full-width destructive button used in the sidebar's NavUser.
+export function SignoutConfirmation({
+  trigger,
+}: {
+  trigger?: React.ReactElement;
+}) {
   // My Const
   const { signout } = useAuth();
 
@@ -24,10 +32,12 @@ export function SignoutConfirmation() {
     <AlertDialog>
       <AlertDialogTrigger
         render={
-          <Button className="w-full" variant={"destructive"}>
-            <SignOutIcon />
-            Log out
-          </Button>
+          trigger ?? (
+            <Button className="w-full" variant={"destructive"}>
+              <SignOutIcon />
+              Log out
+            </Button>
+          )
         }
       />
       <AlertDialogContent>

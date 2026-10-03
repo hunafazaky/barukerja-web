@@ -1,6 +1,11 @@
 import { apiFetch } from "@/lib/api";
 import { PaginatedResponse } from "@/types/api";
-import { Application, ApplicationFormInput } from "@/types/application";
+import {
+  Application,
+  ApplicationFormInput,
+  ApplicationStatus,
+  JobApplicant,
+} from "@/types/application";
 
 // ==================================================
 // Submit an application to a job.
@@ -66,4 +71,52 @@ export function getApplicationCvUrl(
   accessToken: string,
 ): Promise<{ url: string; expiresIn: number }> {
   return apiFetch(`/applications/${id}/cv-url`, { accessToken });
+}
+
+// ==================================================
+// List applicants for one of the signed-in employer's own jobs.
+// Backend route: GET /api/applications/job/:jobId (requires sign-in,
+// must own the job)
+// ==================================================
+export function getApplicationsByJob(
+  jobId: string,
+  params: { page?: number; limit?: number },
+  accessToken: string,
+): Promise<PaginatedResponse<JobApplicant>> {
+  const searchParams = new URLSearchParams();
+  if (params.page) searchParams.set("page", String(params.page));
+  if (params.limit) searchParams.set("limit", String(params.limit));
+  const queryString = searchParams.toString();
+
+  return apiFetch<PaginatedResponse<JobApplicant>>(
+    `/applications/job/${jobId}${queryString ? `?${queryString}` : ""}`,
+    { accessToken },
+  );
+}
+
+// ==================================================
+// Move an application to its next status.
+// Backend route: PATCH /api/applications/:id/status (requires sign-in,
+// must own the application's job)
+//
+// The backend enforces the same transitions as
+// ALLOWED_STATUS_TRANSITIONS below — rejects anything else with a 400.
+// Only `status` is typed on the returned application, for the same
+// reason as createJob/updateJob: the backend's populate here
+// (`job: "posted_by"` only) isn't useful for display, so don't rely on
+// it — the caller already knows which application this is.
+// ==================================================
+export function updateApplicationStatus(
+  id: string,
+  status: ApplicationStatus,
+  accessToken: string,
+): Promise<{
+  message: string;
+  application: { id: string; status: ApplicationStatus };
+}> {
+  return apiFetch(`/applications/${id}/status`, {
+    method: "PATCH",
+    body: { status },
+    accessToken,
+  });
 }

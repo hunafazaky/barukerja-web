@@ -2,11 +2,7 @@ import { JobCompany } from "@/types/company";
 
 export type WorkMode = "onsite" | "hybrid" | "remote";
 export type JobType =
-  | "full_time"
-  | "part_time"
-  | "contract"
-  | "internship"
-  | "volunteer";
+  "full_time" | "part_time" | "contract" | "internship" | "volunteer";
 export type JobStatus = "draft" | "open" | "closed";
 
 // The "poster" info GET /jobs and GET /jobs/:id populate onto a Job —
@@ -29,6 +25,26 @@ export interface JobSummary {
   company: JobCompany;
   posted_by: string;
   bookmarked: boolean;
+}
+
+// The shape GET /jobs/mine returns — notably different from the public
+// Job above: posted_by is NOT populated (it's always the signed-in
+// employer, so there's nothing to show), and there's no "bookmarked"
+// field (that's an optionalAuthMiddleware addition specific to the
+// public findAll/findOne routes, which findMine doesn't use).
+export interface MyJob {
+  id: string;
+  title: string;
+  company: JobCompany;
+  location?: string;
+  work_mode: WorkMode;
+  job_type: JobType;
+  status: JobStatus;
+  applicant_count: number;
+  view_count: number;
+  deadline?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // A single job, as returned by both GET /jobs (inside "items") and

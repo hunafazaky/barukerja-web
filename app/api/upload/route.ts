@@ -51,7 +51,12 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (kind !== "cover" && kind !== "attachment" && kind !== "cv") {
+  if (
+    kind !== "cover" &&
+    kind !== "attachment" &&
+    kind !== "cv" &&
+    kind !== "logo"
+  ) {
     return NextResponse.json(
       { message: "Invalid upload kind." },
       { status: 400 },
@@ -69,9 +74,11 @@ export async function POST(request: NextRequest) {
         message:
           kind === "cover"
             ? "Cover must be a JPEG, PNG, WEBP, or GIF image."
-            : kind === "cv"
-              ? "CV must be a PDF file."
-              : "Attachment must be a PDF file.",
+            : kind === "logo"
+              ? "Logo must be a JPEG, PNG, WEBP, or GIF image."
+              : kind === "cv"
+                ? "CV must be a PDF file."
+                : "Attachment must be a PDF file.",
       },
       { status: 400 },
     );
@@ -92,24 +99,29 @@ export async function POST(request: NextRequest) {
   // between different users uploading files with the same name, and
   // avoids leaking the original filename if that matters to anyone.
   //
-  // CVs live under their own prefix, separate from "covers"/"attachments".
-  // Those two are meant to be publicly readable (see the public-URL logic
-  // below) — CVs are not: they contain personal data, so they're only
-  // ever handed out via a short-lived signed URL (see
-  // application.controller.getCvDownloadUrl on the API). This route
-  // deliberately does NOT build or return a public URL for kind "cv" —
-  // only the relative key, which is what POST /applications' cv_key
-  // field expects. Whatever bucket this points at, its bucket policy
-  // needs to keep the "applications/cvs/" prefix non-public while
-  // "covers/"/"attachments/" stay public — that's an infra setting, not
-  // something this route can enforce on its own.
+  // CVs live under their own prefix, separate from
+  // "covers"/"attachments"/"logos". Those three are meant to be publicly
+  // readable (see the public-URL logic below) — CVs are not: they
+  // contain personal data, so they're only ever handed out via a
+  // short-lived signed URL (see application.controller.getCvDownloadUrl
+  // on the API). This route deliberately does NOT build or return a
+  // public URL for kind "cv" — only the relative key, which is what POST
+  // /applications' cv_key field expects. Whatever bucket this points at,
+  // its bucket policy needs to keep the "applications/cvs/" prefix
+  // non-public while "covers/"/"attachments/"/"logos/" stay public —
+  // that's an infra setting, not something this route can enforce on
+  // its own.
   const keyPrefix =
     kind === "cover"
       ? "covers"
-      : kind === "cv"
-        ? "applications/cvs"
-        : "attachments";
-  const extension = file.name.includes(".") ? file.name.split(".").pop() : undefined;
+      : kind === "logo"
+        ? "logos"
+        : kind === "cv"
+          ? "applications/cvs"
+          : "attachments";
+  const extension = file.name.includes(".")
+    ? file.name.split(".").pop()
+    : undefined;
   const key = `${keyPrefix}/${randomUUID()}${extension ? `.${extension}` : ""}`;
 
   try {

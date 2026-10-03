@@ -244,7 +244,14 @@ function ApplyCta({
   if (isEmployerViewingOwnJob) {
     return (
       <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
-        This is one of your posted jobs.
+        This is one of your posted jobs.{" "}
+        <Link
+          href={`/dashboard/jobs/${jobId}/applicants`}
+          className="underline"
+        >
+          View applicants
+        </Link>
+        .
       </p>
     );
   }
@@ -278,9 +285,7 @@ function ApplyCta({
   }
 
   if (showForm) {
-    return (
-      <ApplyForm jobId={jobId} onSuccess={() => setSubmitted(true)} />
-    );
+    return <ApplyForm jobId={jobId} onSuccess={() => setSubmitted(true)} />;
   }
 
   return <Button onClick={() => setShowForm(true)}>Apply</Button>;

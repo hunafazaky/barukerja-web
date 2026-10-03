@@ -39,7 +39,10 @@ export function JobListSection({
         {title}
       </h2>
 
-      <div className="mt-4 divide-y" style={{ borderColor: "var(--color-border)" }}>
+      <div
+        className="mt-4 divide-y"
+        style={{ borderColor: "var(--color-border)" }}
+      >
         {isLoading &&
           Array.from({ length: 5 }).map((_, i) => (
             <div

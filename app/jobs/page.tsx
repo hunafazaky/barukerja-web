@@ -25,7 +25,10 @@ function JobsPageContent() {
           >
             Find work
           </h1>
-          <p className="mt-2 text-sm" style={{ color: "var(--color-text-muted)" }}>
+          <p
+            className="mt-2 text-sm"
+            style={{ color: "var(--color-text-muted)" }}
+          >
             Open positions, newest first.
           </p>
           <Input

@@ -19,9 +19,7 @@ export default function HomeLayout({
       }
     >
       <AppSidebar variant="inset" />
-      <SidebarInset>
-        {children}
-      </SidebarInset>
+      <SidebarInset>{children}</SidebarInset>
     </SidebarProvider>
   );
 }

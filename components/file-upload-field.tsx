@@ -7,7 +7,7 @@ import { FieldDescription } from "@/components/ui/field";
 
 interface FileUploadFieldProps {
   id?: string;
-  kind: "cover" | "attachment" | "cv";
+  kind: "cover" | "attachment" | "cv" | "logo";
   // The file picked in this session, not yet uploaded — owned by the
   // parent form. Nothing is sent to R2 until the parent's submit handler
   // actually uploads it (see WorkFormWrite / WorkFormEdit).
@@ -33,7 +33,7 @@ export function FileUploadField({
   const [error, setError] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  const isCover = kind === "cover";
+  const isImage = kind === "cover" || kind === "logo";
   const { allowedTypes, maxSize } = getUploadRules(kind);
   const maxSizeLabel = `${Math.round(maxSize / (1024 * 1024))}MB`;
 
@@ -43,14 +43,14 @@ export function FileUploadField({
   // whenever the file changes or this component unmounts, so it doesn't
   // leak memory.
   useEffect(() => {
-    if (!file || !isCover) {
+    if (!file || !isImage) {
       setPreviewUrl(null);
       return;
     }
     const objectUrl = URL.createObjectURL(file);
     setPreviewUrl(objectUrl);
     return () => URL.revokeObjectURL(objectUrl);
-  }, [file, isCover]);
+  }, [file, isImage]);
 
   function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
     const selected = e.target.files?.[0];
@@ -63,7 +63,7 @@ export function FileUploadField({
 
     if (!allowedTypes.includes(selected.type)) {
       setError(
-        isCover
+        isImage
           ? "Please choose a JPEG, PNG, WEBP, or GIF image."
           : "Please choose a PDF file.",
       );
@@ -81,7 +81,7 @@ export function FileUploadField({
   // over whatever was already uploaded. It's rendered with a plain <img>,
   // not next/image — "blob:" URLs are browser-local and temporary, which
   // next/image's remote-image handling isn't designed for.
-  const imageSrc = previewUrl ?? (isCover ? existingUrl : undefined);
+  const imageSrc = previewUrl ?? (isImage ? existingUrl : undefined);
 
   return (
     <div className="flex flex-col gap-2">
@@ -98,22 +98,21 @@ export function FileUploadField({
         </FieldDescription>
       )}
 
-      {isCover && imageSrc && (
-        // eslint-disable-next-line @next/next/no-img-element -- local
+      {isImage && imageSrc && (
         // blob: preview URLs aren't supported by next/image.
         <img
           src={imageSrc}
-          alt="Cover preview"
+          alt="Preview"
           width={160}
           height={160}
           className="rounded object-cover"
         />
       )}
 
-      {!isCover && file && (
+      {!isImage && file && (
         <FieldDescription>Attached: {file.name}</FieldDescription>
       )}
-      {!isCover && !file && existingUrl && (
+      {!isImage && !file && existingUrl && (
         <FieldDescription>
           Attached:{" "}
           <a href={existingUrl} target="_blank" rel="noreferrer">
