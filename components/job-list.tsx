@@ -33,7 +33,7 @@ export function JobListSection({
   return (
     <section>
       <h2
-        className="text-2xl font-black"
+        className="text-xl font-black"
         style={{ fontFamily: "var(--font-heading)" }}
       >
         {title}

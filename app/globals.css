@@ -11,16 +11,22 @@
    the shadcn theme tokens below rather than replacing them; new
    BaruKerja-specific UI should reach for these directly
    (bg-[var(--color-bg)], text-[var(--color-danger)], etc.) instead of
-   the generic shadcn primary/destructive tokens, which stay in place
-   for the shadcn/ui primitives that already use them.
+   the generic shadcn tokens. The shadcn tokens (primary, destructive,
+   ring, border, radius) are wired to these further down, so shadcn/ui
+   primitives and hand-styled elements stay visually consistent.
+
+   Naming: the brand colour is --color-brand, NOT --color-accent. Tailwind
+   maps `bg-accent`/`text-accent` to --color-accent (shadcn's neutral hover
+   surface), so defining our teal under that name turned every shadcn
+   hover/focus state (e.g. Select items) solid teal with dark text.
    ================================================== */
 :root {
   --color-bg: #faf9f9;
   --color-text: #1c2321;
   --color-text-muted: #6b6f6d;
   --color-border: #dad6cc;
-  --color-accent: #1f6f54;
-  --color-accent-secondary: #b98900;
+  --color-brand: #1f6f54;
+  --color-highlight: #b98900;
   --color-danger: #b3412f;
 
   /* The base shadcn tokens were never set for light mode in this file
@@ -80,24 +86,28 @@
   --card-foreground: oklch(0.141 0.005 285.823);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.141 0.005 285.823);
-  --primary: oklch(0.5 0.134 242.749);
-  --primary-foreground: oklch(0.977 0.013 236.62);
+  /* Wired to the BaruKerja tokens at the top of this file — these were the
+     stock shadcn sky-blue/red/10px defaults, so primary buttons were blue,
+     destructive actions were a different red than every error message, and
+     corners were far rounder than the flat design calls for. */
+  --primary: var(--color-brand);
+  --primary-foreground: oklch(1 0 0);
   --secondary: oklch(0.967 0.001 286.375);
   --secondary-foreground: oklch(0.21 0.006 285.885);
   --muted: oklch(0.967 0.001 286.375);
   --muted-foreground: oklch(0.552 0.016 285.938);
   --accent: oklch(0.967 0.001 286.375);
   --accent-foreground: oklch(0.21 0.006 285.885);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.92 0.004 286.32);
-  --input: oklch(0.92 0.004 286.32);
-  --ring: oklch(0.705 0.015 286.067);
+  --destructive: var(--color-danger);
+  --border: var(--color-border);
+  --input: var(--color-border);
+  --ring: var(--color-brand);
   --chart-1: oklch(0.879 0.169 91.605);
   --chart-2: oklch(0.769 0.188 70.08);
   --chart-3: oklch(0.666 0.179 58.318);
   --chart-4: oklch(0.555 0.163 48.998);
   --chart-5: oklch(0.473 0.137 46.201);
-  --radius: 0.625rem;
+  --radius: 0.25rem; /* ~4px, per the flat design spec */
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.141 0.005 285.823);
   --sidebar-primary: oklch(0.588 0.158 241.966);

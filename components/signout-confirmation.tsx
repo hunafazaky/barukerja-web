@@ -19,7 +19,7 @@ import { useAuth } from "@/context/AuthContext";
 // trigger lets callers swap in a different-looking button (e.g. a
 // compact icon-only one for the mobile header — see site-header.tsx)
 // while sharing the same confirm-before-signing-out flow. Defaults to
-// the full-width destructive button used in the sidebar's NavUser.
+// a full-width destructive "Log out" button.
 export function SignoutConfirmation({
   trigger,
 }: {

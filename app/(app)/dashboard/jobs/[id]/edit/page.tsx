@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { SiteHeader } from "@/components/site-header";
+import { PageHeader } from "@/components/page-header";
 import { RequireAuth } from "@/components/require-auth";
 import { JobForm } from "@/components/job-form";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -56,29 +56,27 @@ function EditJobPageContent() {
 
   return (
     <>
-      <SiteHeader title="Edit job" />
-      <div className="mx-auto w-full max-w-lg px-4 py-6 md:px-6">
-        {isLoading && <Skeleton className="h-64 w-full" />}
+      <PageHeader title="Edit job" />
+      {isLoading && <Skeleton className="h-64 w-full" />}
 
-        {!isLoading && error && (
-          <div
-            className="rounded-md border px-4 py-6 text-sm"
-            style={{
-              borderColor: "var(--color-danger)",
-              color: "var(--color-danger)",
-            }}
-          >
-            {error}
-          </div>
-        )}
+      {!isLoading && error && (
+        <div
+          className="rounded-md border px-4 py-6 text-sm"
+          style={{
+            borderColor: "var(--color-danger)",
+            color: "var(--color-danger)",
+          }}
+        >
+          {error}
+        </div>
+      )}
 
-        {!isLoading && !error && job && (
-          <JobForm
-            existingJob={job}
-            onSuccess={() => router.push("/dashboard/jobs")}
-          />
-        )}
-      </div>
+      {!isLoading && !error && job && (
+        <JobForm
+          existingJob={job}
+          onSuccess={() => router.push("/dashboard/jobs")}
+        />
+      )}
     </>
   );
 }

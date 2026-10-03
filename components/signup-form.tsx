@@ -141,7 +141,9 @@ export function SignupForm({
                 )}
               </Field>
               <Field>
-                <FieldLabel htmlFor="role-seeker">I'm signing up to</FieldLabel>
+                <FieldLabel htmlFor="role-seeker">
+                  I&apos;m signing up to
+                </FieldLabel>
                 <div
                   className="grid grid-cols-2 gap-3"
                   role="radiogroup"
@@ -152,7 +154,7 @@ export function SignupForm({
                     className={cn(
                       "flex cursor-pointer items-center justify-center rounded-md border px-3 py-2 text-sm",
                       role === "seeker"
-                        ? "border-[var(--color-accent)] bg-[var(--color-accent)]/10 font-medium"
+                        ? "border-[var(--color-brand)] bg-[var(--color-brand)]/10 font-medium"
                         : "border-border",
                     )}
                   >
@@ -172,7 +174,7 @@ export function SignupForm({
                     className={cn(
                       "flex cursor-pointer items-center justify-center rounded-md border px-3 py-2 text-sm",
                       role === "employer"
-                        ? "border-[var(--color-accent)] bg-[var(--color-accent)]/10 font-medium"
+                        ? "border-[var(--color-brand)] bg-[var(--color-brand)]/10 font-medium"
                         : "border-border",
                     )}
                   >

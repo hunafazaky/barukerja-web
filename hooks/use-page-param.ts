@@ -10,7 +10,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 //
 // Note: useSearchParams() requires a <Suspense> boundary somewhere above
 // wherever this hook is used — see how the list pages under
-// app/(dashboard)/ wrap their content in <Suspense>.
+// app/(app)/ wrap their content in <Suspense>.
 export function usePageParam(): [number, (page: number) => void] {
   const searchParams = useSearchParams();
   const pathname = usePathname();

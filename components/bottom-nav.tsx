@@ -3,19 +3,17 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { getNavItems } from "@/lib/nav-items";
+import { getNavItems, isNavActive } from "@/lib/nav-items";
 
 // The mobile-first primary nav — a fixed bottom tab bar, visible only
-// below the md breakpoint (md:hidden). On desktop, the same destinations
-// live in components/app-sidebar.tsx (dashboard pages) or inline in
-// components/site-nav.tsx (public pages) instead; this is NOT rendered
-// there. Account actions (sign in/out) are deliberately NOT tab items
-// here — those live in the top bar (SiteNav/SiteHeader) on every screen
-// size, since a bottom tab is a navigation destination, not an action.
+// below the md breakpoint (md:hidden). On desktop the same destinations
+// show inline in components/site-nav.tsx instead. Account actions (sign
+// in/out) are deliberately NOT tab items — those stay in the top bar on
+// every screen size, since a tab is a navigation destination, not an
+// action.
 //
-// Rendered once, globally, from app/layout.tsx — content needs bottom
-// padding (pb-16, already applied where this renders) on mobile so the
-// fixed bar doesn't cover the last bit of scrollable content.
+// Rendered by components/app-shell.tsx, which also reserves the bottom
+// padding so the fixed bar doesn't cover the last bit of content.
 export function BottomNav() {
   const { user, isLoading } = useAuth();
   const pathname = usePathname();
@@ -27,7 +25,7 @@ export function BottomNav() {
 
   const items = getNavItems(user?.role);
 
-  // The sidebar's full labels ("My applications", "Company profile")
+  // The top bar's full labels ("My applications", "Company profile")
   // wrap awkwardly at bottom-tab width — shorten just for this display,
   // the underlying nav-items list stays the single source of truth for
   // which destinations exist and where they go.
@@ -51,9 +49,7 @@ export function BottomNav() {
         style={{ gridTemplateColumns: `repeat(${items.length}, 1fr)` }}
       >
         {items.map((item) => {
-          const isActive =
-            pathname === item.url ||
-            (item.url !== "/jobs" && pathname.startsWith(item.url + "/"));
+          const isActive = isNavActive(pathname, item.url);
           return (
             <Link
               key={item.url}
@@ -61,7 +57,7 @@ export function BottomNav() {
               className="flex flex-col items-center justify-center gap-1 text-[11px]"
               style={{
                 color: isActive
-                  ? "var(--color-accent)"
+                  ? "var(--color-brand)"
                   : "var(--color-text-muted)",
               }}
             >
