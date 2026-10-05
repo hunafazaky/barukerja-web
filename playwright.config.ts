@@ -27,7 +27,7 @@ export default defineConfig({
       reuseExistingServer: true,
     },
     {
-      command: `npx next dev -p ${WEB_PORT}`,
+      command: `bunx next dev -p ${WEB_PORT}`,
       env: { BACKEND_API_URL: `http://localhost:${MOCK_PORT}` },
       url: `http://localhost:${WEB_PORT}/auth/signin`,
       reuseExistingServer: true,
