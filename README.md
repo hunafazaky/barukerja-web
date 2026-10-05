@@ -17,12 +17,14 @@ npm install
 npm run dev                  # http://localhost:3000
 ```
 
-| Script                            | What it does                                       |
-| --------------------------------- | -------------------------------------------------- |
-| `npm run dev` / `build` / `start` | Next.js dev / production build / serve             |
-| `npm run lint`                    | ESLint                                             |
-| `npm run typecheck`               | `tsc --noEmit`                                     |
-| `npm run test:e2e`                | Playwright against a mock API (`e2e/mock-api.mjs`) |
+| Script                            | What it does                                                                                                   |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `npm run dev` / `build` / `start` | Next.js dev / production build / serve                                                                         |
+| `npm run lint`                    | ESLint                                                                                                         |
+| `npm run typecheck`               | `tsc --noEmit`                                                                                                 |
+| `npm run test:e2e`                | Playwright against a mock API (`e2e/mock-api.mjs`). First time on a machine: `npx playwright install chromium` |
+
+> **Viewing CVs** uses a signed URL minted by the **API**, so `barukerja-api` needs its own `CLOUDFLARE_R2_ACCOUNT_ID`, `CLOUDFLARE_R2_ACCESS_KEY_ID`, `CLOUDFLARE_R2_SECRET_ACCESS_KEY` and `CLOUDFLARE_R2_BUCKET_NAME` env vars (the same bucket as this app). Without them the API answers "File storage is not configured on this server yet."
 
 ## How it works
 

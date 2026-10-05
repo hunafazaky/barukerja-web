@@ -16,7 +16,7 @@ import {
   signout as apiSignout,
   refreshAccessToken,
 } from "@/lib/auth.api";
-import { getUserById } from "@/lib/user.api";
+import { deleteUser, getUserById } from "@/lib/user.api";
 import { decodeJwtPayload } from "@/lib/jwt";
 import { ApiError } from "@/types/api";
 import { registerAuthRefreshHandlers } from "@/lib/api";
@@ -53,6 +53,10 @@ interface AuthContextValue {
     role?: "seeker" | "employer";
   }) => Promise<void>;
   signout: () => Promise<void>;
+  // Replace the in-memory user after the profile was edited.
+  updateUser: (user: User) => void;
+  // Delete the account on the API, then clear the local session.
+  deleteAccount: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -250,6 +254,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  async function deleteAccount() {
+    const token = accessTokenRef.current;
+    if (!user || !token) return;
+    // Mark first so guards don't bounce us to sign-in?next=/account.
+    signingOutRef.current = true;
+    try {
+      await deleteUser(user.id, token);
+    } catch (err) {
+      signingOutRef.current = false;
+      throw err;
+    }
+    applyAccessToken(null);
+    setUser(null);
+    router.replace("/auth/signin");
+    setTimeout(() => {
+      signingOutRef.current = false;
+    }, 1000);
+  }
+
   return (
     <AuthContext.Provider
       value={{
@@ -261,6 +284,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signin,
         signup,
         signout,
+        updateUser: setUser,
+        deleteAccount,
       }}
     >
       {children}

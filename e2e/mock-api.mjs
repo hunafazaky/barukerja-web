@@ -138,7 +138,7 @@ function reset() {
     app("app-orphan", 0, "applied"),
   ];
   for (let i = 0; i < 10; i++)
-    applications.push(app(`app-f${i}`, 1, "rejected"));
+    applications.push(app(`app-f${i}`, 3, "rejected"));
   applications.push(app("app-last", 4, "applied", "Last Page Job"));
   applicants = [
     {
@@ -239,6 +239,32 @@ http
         { message: "Sign Out success." },
         { "Set-Cookie": "refreshToken=; Path=/; Max-Age=0" },
       );
+    if ((m = p.match(/^\/api\/users\/([\w-]+)$/)) && method === "PATCH") {
+      const found = Object.values(users).find((x) => x.id === m[1]);
+      if (!found) return send(res, 404, { message: "The user is not found." });
+      if (body.password && body.currentPassword !== "Passw0rd1")
+        return send(res, 401, {
+          message: "The current password is invalid. Update denied.",
+        });
+      if (body.display_name !== undefined)
+        found.display_name = body.display_name;
+      if (body.bio !== undefined) found.bio = body.bio;
+      return send(res, 200, {
+        message: "The user data updated successfully.",
+        user: found,
+      });
+    }
+    if ((m = p.match(/^\/api\/users\/([\w-]+)$/)) && method === "DELETE") {
+      return send(
+        res,
+        200,
+        {
+          message:
+            "The user account and jobs posted by the user are permanently deleted.",
+        },
+        { "Set-Cookie": "refreshToken=; Path=/; Max-Age=0" },
+      );
+    }
     if ((m = p.match(/^\/api\/users\/([\w-]+)$/))) {
       const found = Object.values(users).find((x) => x.id === m[1]);
       return found

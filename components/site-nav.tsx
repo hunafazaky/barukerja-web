@@ -57,16 +57,29 @@ export function SiteNav() {
           {!isLoading && user ? (
             // Same confirm-before-signing-out flow everywhere; only the
             // visible trigger is customised.
-            <SignoutConfirmation
-              trigger={
-                <button
-                  className="inline-flex min-h-10 items-center px-1 hover:underline"
-                  style={{ color: "var(--color-text-muted)" }}
-                >
-                  Sign out
-                </button>
-              }
-            />
+            <>
+              <Link
+                href="/account"
+                className="inline-flex min-h-10 items-center px-1 hover:underline"
+                style={
+                  isNavActive(pathname, "/account")
+                    ? { color: "var(--color-brand)", fontWeight: 700 }
+                    : undefined
+                }
+              >
+                Account
+              </Link>
+              <SignoutConfirmation
+                trigger={
+                  <button
+                    className="inline-flex min-h-10 items-center px-1 hover:underline"
+                    style={{ color: "var(--color-text-muted)" }}
+                  >
+                    Sign out
+                  </button>
+                }
+              />
+            </>
           ) : (
             !isLoading && (
               <>

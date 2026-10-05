@@ -416,3 +416,54 @@ test.describe("phase 3", () => {
     expect(uploads).toBe(1);
   });
 });
+
+test.describe("account & applied state", () => {
+  test("a job you already applied to shows the status, not the Apply button", async ({
+    page,
+    context,
+  }) => {
+    await signedIn(context, "seeker");
+    await page.goto("/jobs/job-4"); // mock: seeker has an application for job-4
+    await expect(page.getByText(/already applied/i)).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Apply", exact: true }),
+    ).toHaveCount(0);
+  });
+
+  test("account page: edit profile and change password", async ({
+    page,
+    context,
+  }) => {
+    await signedIn(context, "seeker");
+    await page.goto("/account");
+    await page.getByLabel("Display name").fill("Sari Baru");
+    await page.getByRole("button", { name: "Save changes" }).click();
+    await expect(page.getByText("Profile saved.")).toBeVisible();
+    await page.getByLabel("Current password").fill("wrong");
+    await page.getByLabel("New password", { exact: true }).fill("Newpass123");
+    await page.getByLabel("Confirm new password").fill("Newpass123");
+    await page.getByRole("button", { name: "Change password" }).click();
+    await expect(page.getByText(/current password is invalid/i)).toBeVisible();
+  });
+
+  test("account page: deleting the account asks to confirm, then signs out", async ({
+    page,
+    context,
+  }) => {
+    await signedIn(context, "seeker");
+    await page.goto("/account");
+    await page.getByRole("button", { name: "Delete my account" }).click();
+    await page
+      .getByRole("alertdialog")
+      .getByRole("button", { name: "Cancel" })
+      .click();
+    expect(await count("DELETE", /^\/api\/users\//)).toBe(0);
+    await page.getByRole("button", { name: "Delete my account" }).click();
+    await page
+      .getByRole("alertdialog")
+      .getByRole("button", { name: "Delete account" })
+      .click();
+    await expect(page).toHaveURL(/\/auth\/signin/);
+    expect(await count("DELETE", /^\/api\/users\/seeker-id$/)).toBe(1);
+  });
+});

@@ -13,6 +13,8 @@ import { useAuth } from "@/context/AuthContext";
 import { InlineError } from "@/components/inline-error";
 import { useApiQuery } from "@/hooks/use-api-query";
 import { useBookmark } from "@/hooks/use-bookmark";
+import { useExistingApplication } from "@/hooks/use-existing-application";
+import { StatusBadge } from "@/components/status-badge";
 import { getJobById } from "@/lib/job.api";
 import { JobDescription } from "@/components/job-description";
 import {
@@ -188,11 +190,9 @@ export default function JobDetailPage() {
   );
 }
 
-// Applications aren't tracked as "already applied" on this page — the
-// job detail response has no such field (only /applications/mine would
-// tell us). If someone's already applied, the backend rejects the
-// resubmit with a 409 and ApplyForm surfaces that message directly
-// rather than this page trying to pre-detect it.
+// "Already applied" comes from the seeker's own applications (the job
+// response has no such field); the backend still rejects a duplicate with a
+// 409, which ApplyForm shows as a fallback.
 function ApplyCta({
   jobId,
   applyState,
@@ -256,6 +256,48 @@ function ApplyCta({
     );
   }
 
+  return (
+    <SeekerApply
+      jobId={jobId}
+      showForm={showForm}
+      setShowForm={setShowForm}
+      submitted={submitted}
+      setSubmitted={setSubmitted}
+    />
+  );
+}
+
+// Seeker-only part of the CTA, split out so the "already applied" lookup
+// only runs for signed-in seekers on open jobs.
+function SeekerApply({
+  jobId,
+  showForm,
+  setShowForm,
+  submitted,
+  setSubmitted,
+}: {
+  jobId: string;
+  showForm: boolean;
+  setShowForm: (v: boolean) => void;
+  submitted: boolean;
+  setSubmitted: (v: boolean) => void;
+}) {
+  const { application, isLoading } = useExistingApplication(jobId);
+
+  if (application && !submitted) {
+    return (
+      <div className="flex flex-wrap items-center gap-3 text-sm">
+        <StatusBadge kind="application" status={application.status} />
+        <span style={{ color: "var(--color-text-muted)" }}>
+          You&apos;ve already applied to this job.
+        </span>
+        <Link href="/applications" className="underline">
+          View my applications
+        </Link>
+      </div>
+    );
+  }
+
   if (submitted) {
     return (
       <p className="text-sm" style={{ color: "var(--color-brand)" }}>
@@ -272,5 +314,9 @@ function ApplyCta({
     return <ApplyForm jobId={jobId} onSuccess={() => setSubmitted(true)} />;
   }
 
-  return <Button onClick={() => setShowForm(true)}>Apply</Button>;
+  return (
+    <Button disabled={isLoading} onClick={() => setShowForm(true)}>
+      Apply
+    </Button>
+  );
 }
