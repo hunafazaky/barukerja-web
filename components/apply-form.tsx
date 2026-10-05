@@ -66,7 +66,7 @@ export function ApplyForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="mt-2 space-y-4 rounded-md border p-4"
+      className="mt-2 space-y-4 border p-4"
       style={{ borderColor: "var(--color-border)" }}
     >
       <div>

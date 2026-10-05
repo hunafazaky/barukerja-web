@@ -111,7 +111,7 @@ export function FileUploadField({
           alt="Preview"
           width={160}
           height={160}
-          className="rounded object-cover"
+          className="object-cover"
         />
       )}
 

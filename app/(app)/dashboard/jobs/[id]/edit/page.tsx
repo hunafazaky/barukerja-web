@@ -1,5 +1,6 @@
 "use client";
 
+import { useDocumentTitle } from "@/hooks/use-document-title";
 import { useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { PageHeader } from "@/components/page-header";
@@ -12,6 +13,7 @@ import { useApiQuery } from "@/hooks/use-api-query";
 import { getJobById } from "@/lib/job.api";
 
 function EditJobPageContent() {
+  useDocumentTitle("Edit job");
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { user } = useAuth();

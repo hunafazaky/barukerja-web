@@ -19,8 +19,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-svh" style={{ background: "var(--color-bg)" }}>
       <SiteNav />
       <main
-        className={`mx-auto w-full max-w-3xl px-4 pt-6 md:px-6 md:pt-8 md:pb-10 ${
-          hasBottomNav ? "pb-24" : "pb-10"
+        // wrap-anywhere: user-supplied text (job titles, company names,
+        // emails) has no spaces to wrap on, and would otherwise push the
+        // page wider than the screen. (Also lets flex children shrink.)
+        className={`mx-auto w-full max-w-3xl px-4 pt-6 wrap-anywhere md:px-6 md:pt-8 md:pb-10 ${
+          // 4rem tab bar + breathing room + the iPhone home-indicator inset
+          hasBottomNav ? "pb-[calc(6rem+env(safe-area-inset-bottom))]" : "pb-10"
         }`}
       >
         {children}

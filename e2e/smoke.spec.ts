@@ -315,3 +315,30 @@ test.describe("employer pages", () => {
     expect(await count("DELETE", /^\/api\/jobs\//)).toBe(0);
   });
 });
+
+test.describe("responsive", () => {
+  test.use({ viewport: { width: 375, height: 812 } });
+
+  const pages: Array<[string, "seeker" | "employer" | null]> = [
+    ["/jobs", null],
+    ["/jobs/job-3", null],
+    ["/companies/company-3", null],
+    ["/applications", "seeker"],
+    ["/dashboard/jobs", "employer"],
+    ["/dashboard/jobs/job-1/applicants", "employer"],
+    ["/auth/signup", null],
+  ];
+
+  for (const [path, role] of pages) {
+    test(`no horizontal overflow: ${path}`, async ({ page, context }) => {
+      if (role) await signedIn(context, role);
+      await page.goto(path);
+      await page.waitForLoadState("networkidle");
+      const { sw, cw } = await page.evaluate(() => ({
+        sw: document.documentElement.scrollWidth,
+        cw: document.documentElement.clientWidth,
+      }));
+      expect(sw).toBeLessThanOrEqual(cw);
+    });
+  }
+});

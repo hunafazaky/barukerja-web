@@ -1,5 +1,6 @@
 "use client";
 
+import { useDocumentTitle } from "@/hooks/use-document-title";
 import { Suspense } from "react";
 import { useParams } from "next/navigation";
 import { InlineError } from "@/components/inline-error";
@@ -20,6 +21,7 @@ function CompanyProfileContent() {
   } = useApiQuery(`company:${id}`, () => getCompanyById(id), {
     errorMessage: "Failed to load this company. Please try again.",
   });
+  useDocumentTitle(company?.name);
   const jobsData = useJobs({ company: id, page, sort: "newest" });
   useClampPage(page, jobsData.pagination, setPage);
 
@@ -44,7 +46,7 @@ function CompanyProfileContent() {
               <img
                 src={company.logo}
                 alt=""
-                className="h-16 w-16 rounded-md border object-cover"
+                className="h-16 w-16 border object-cover"
                 style={{ borderColor: "var(--color-border)" }}
               />
             )}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useDocumentTitle } from "@/hooks/use-document-title";
 import { Suspense, useState } from "react";
 import { PageHeader } from "@/components/page-header";
 import { JobListSection } from "@/components/job-list";
@@ -10,6 +11,7 @@ import { Input } from "@/components/ui/input";
 // Public — no sign-in required to browse. Signing in just adds
 // per-job "bookmarked" status (handled inside useJobs/getJobs already).
 function JobsPageContent() {
+  useDocumentTitle("Find work");
   const [page, setPage] = usePageParam();
   const [q, setQ] = useState("");
   const jobsData = useJobs({ page, q: q || undefined, sort: "newest" });

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Archivo, Atkinson_Hyperlegible, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
@@ -27,8 +27,18 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// viewport-fit=cover is what makes env(safe-area-inset-*) report real values
+// on notched phones; without it the bottom tab bar's safe-area padding was
+// always 0 and the tabs sat under the iOS home indicator.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
+
 export const metadata: Metadata = {
-  title: "BaruKerja",
+  // Pages set only their own part ("Find work"); this adds the brand.
+  title: { default: "BaruKerja", template: "%s · BaruKerja" },
   description: "Find work, or find the people to do it.",
 };
 

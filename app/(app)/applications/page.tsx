@@ -1,5 +1,6 @@
 "use client";
 
+import { useDocumentTitle } from "@/hooks/use-document-title";
 import { Suspense, useState } from "react";
 import Link from "next/link";
 import { ConfirmDialog } from "@/components/confirm-dialog";
@@ -8,7 +9,7 @@ import { InlineError } from "@/components/inline-error";
 import { PageHeader } from "@/components/page-header";
 import { RequireAuth } from "@/components/require-auth";
 import { PaginationControls } from "@/components/pagination-controls";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/context/AuthContext";
@@ -20,33 +21,10 @@ import {
   getApplicationCvUrl,
   withdrawApplication,
 } from "@/lib/application.api";
-import { Application, ApplicationStatus } from "@/types/application";
-
-const STATUS_LABELS: Record<ApplicationStatus, string> = {
-  applied: "Applied",
-  reviewed: "Reviewed",
-  interview: "Interview",
-  accepted: "Accepted",
-  rejected: "Rejected",
-};
-
-function statusStyle(status: ApplicationStatus) {
-  if (status === "accepted") {
-    return { borderColor: "var(--color-brand)", color: "var(--color-brand)" };
-  }
-  if (status === "rejected") {
-    return { borderColor: "var(--color-danger)", color: "var(--color-danger)" };
-  }
-  if (status === "interview") {
-    return {
-      borderColor: "var(--color-highlight)",
-      color: "var(--color-highlight)",
-    };
-  }
-  return undefined;
-}
+import { Application } from "@/types/application";
 
 function ApplicationsPageContent() {
+  useDocumentTitle("My applications");
   const { getAccessToken } = useAuth();
   const [page, setPage] = usePageParam();
   const { applications, pagination, isLoading, error, refetch } =
@@ -126,12 +104,11 @@ function ApplicationsPageContent() {
       <div className="divide-y" style={{ borderColor: "var(--color-border)" }}>
         {!showSkeleton &&
           !error &&
-          applications.map((application, i) => (
+          applications.map((application) => (
             <div
               key={application.id}
               data-testid={`application-${application.id}`}
-              className={`py-4 ${i === 0 ? "" : "border-t"}`}
-              style={{ borderColor: "var(--color-border)" }}
+              className="py-4"
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -155,12 +132,7 @@ function ApplicationsPageContent() {
                     <DeletedJobNotice />
                   )}
                 </div>
-                <Badge
-                  variant="outline"
-                  style={statusStyle(application.status)}
-                >
-                  {STATUS_LABELS[application.status]}
-                </Badge>
+                <StatusBadge kind="application" status={application.status} />
               </div>
 
               <div className="mt-3 flex gap-2">

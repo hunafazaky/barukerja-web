@@ -21,11 +21,14 @@ export function SiteNav() {
   const navItems = getNavItems(user?.role);
 
   return (
-    <header className="border-b" style={{ borderColor: "var(--color-border)" }}>
-      <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-4 md:px-6">
+    <header
+      className="border-b pt-[env(safe-area-inset-top)]"
+      style={{ borderColor: "var(--color-border)" }}
+    >
+      <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-2 md:px-6">
         <Link
           href="/jobs"
-          className="text-lg font-black"
+          className="inline-flex min-h-10 items-center text-lg font-black"
           style={{ fontFamily: "var(--font-heading)" }}
         >
           BaruKerja
@@ -37,7 +40,7 @@ export function SiteNav() {
               <Link
                 key={item.url}
                 href={item.url}
-                className="hover:underline"
+                className="inline-flex min-h-10 items-center hover:underline"
                 style={
                   isNavActive(pathname, item.url)
                     ? { color: "var(--color-brand)", fontWeight: 700 }
@@ -50,14 +53,14 @@ export function SiteNav() {
           </nav>
         )}
 
-        <div className="flex items-center gap-4 text-sm">
+        <div className="flex items-center gap-2 text-sm sm:gap-4">
           {!isLoading && user ? (
             // Same confirm-before-signing-out flow everywhere; only the
             // visible trigger is customised.
             <SignoutConfirmation
               trigger={
                 <button
-                  className="hover:underline"
+                  className="inline-flex min-h-10 items-center px-1 hover:underline"
                   style={{ color: "var(--color-text-muted)" }}
                 >
                   Sign out
@@ -67,12 +70,15 @@ export function SiteNav() {
           ) : (
             !isLoading && (
               <>
-                <Link href="/auth/signin" className="hover:underline">
+                <Link
+                  href="/auth/signin"
+                  className="inline-flex min-h-10 items-center px-1 hover:underline"
+                >
                   Sign in
                 </Link>
                 <Link
                   href="/auth/signup"
-                  className="rounded-md border px-3 py-1.5 font-medium"
+                  className="inline-flex min-h-10 items-center border px-3 font-medium"
                   style={{
                     borderColor: "var(--color-brand)",
                     color: "var(--color-brand)",

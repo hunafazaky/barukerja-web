@@ -1,5 +1,6 @@
 "use client";
 
+import { useDocumentTitle } from "@/hooks/use-document-title";
 import { Suspense, useState } from "react";
 import Link from "next/link";
 import { DeletedJobNotice } from "@/components/deleted-job-notice";
@@ -16,6 +17,7 @@ import { toggleBookmark } from "@/lib/bookmark.api";
 import { ApiError } from "@/types/api";
 
 function BookmarkedPageContent() {
+  useDocumentTitle("Bookmarked jobs");
   const { getAccessToken } = useAuth();
   const [page, setPage] = usePageParam();
   const { bookmarks, pagination, isLoading, error, refetch } =
@@ -75,11 +77,10 @@ function BookmarkedPageContent() {
       <div className="divide-y" style={{ borderColor: "var(--color-border)" }}>
         {!showSkeleton &&
           !error &&
-          bookmarks.map((bookmark, i) => (
+          bookmarks.map((bookmark) => (
             <div
               key={bookmark.id}
-              className={`flex items-center justify-between gap-4 py-4 ${i === 0 ? "" : "border-t"}`}
-              style={{ borderColor: "var(--color-border)" }}
+              className="flex items-center justify-between gap-4 py-4"
             >
               {bookmark.job ? (
                 <>

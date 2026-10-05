@@ -44,7 +44,7 @@ export function SignupForm({
     setIsSubmitting(true);
 
     if (password !== confirmPassword) {
-      setErrorMessage("Password and Confirm Password does not match.");
+      setErrorMessage("Password and confirm password do not match.");
       setIsSubmitting(false);
       return;
     }
@@ -151,7 +151,7 @@ export function SignupForm({
                   <label
                     htmlFor="role-seeker"
                     className={cn(
-                      "flex cursor-pointer items-center justify-center rounded-md border px-3 py-2 text-sm",
+                      "flex cursor-pointer items-center justify-center border px-3 py-2 text-sm has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring/40",
                       role === "seeker"
                         ? "border-[var(--color-brand)] bg-[var(--color-brand)]/10 font-medium"
                         : "border-border",
@@ -171,7 +171,7 @@ export function SignupForm({
                   <label
                     htmlFor="role-employer"
                     className={cn(
-                      "flex cursor-pointer items-center justify-center rounded-md border px-3 py-2 text-sm",
+                      "flex cursor-pointer items-center justify-center border px-3 py-2 text-sm has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring/40",
                       role === "employer"
                         ? "border-[var(--color-brand)] bg-[var(--color-brand)]/10 font-medium"
                         : "border-border",
@@ -191,7 +191,7 @@ export function SignupForm({
                 </div>
               </Field>
               <Field>
-                <Field className="grid grid-cols-2 gap-4">
+                <Field className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <Field>
                     <FieldLabel htmlFor="password">
                       <div className="flex gap-0.5">
@@ -209,7 +209,7 @@ export function SignupForm({
                   <Field>
                     <FieldLabel htmlFor="confirm-password">
                       <div className="flex gap-0.5">
-                        Confirm Password
+                        Confirm password
                         <span className="text-destructive">*</span>
                       </div>
                     </FieldLabel>

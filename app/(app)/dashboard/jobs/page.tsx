@@ -1,5 +1,6 @@
 "use client";
 
+import { useDocumentTitle } from "@/hooks/use-document-title";
 import { Suspense, useState } from "react";
 import Link from "next/link";
 import { ConfirmDialog } from "@/components/confirm-dialog";
@@ -7,7 +8,7 @@ import { InlineError } from "@/components/inline-error";
 import { PageHeader } from "@/components/page-header";
 import { RequireAuth } from "@/components/require-auth";
 import { PaginationControls } from "@/components/pagination-controls";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/context/AuthContext";
@@ -15,25 +16,10 @@ import { useMyJobs } from "@/hooks/use-my-jobs";
 import { useClampPage, usePageParam } from "@/hooks/use-page-param";
 import { deleteJob } from "@/lib/job.api";
 import { ApiError } from "@/types/api";
-import { JobStatus, MyJob } from "@/types/job";
-
-const STATUS_LABELS: Record<JobStatus, string> = {
-  draft: "Draft",
-  open: "Open",
-  closed: "Closed",
-};
-
-function statusStyle(status: JobStatus) {
-  if (status === "open") {
-    return { borderColor: "var(--color-brand)", color: "var(--color-brand)" };
-  }
-  if (status === "closed") {
-    return { borderColor: "var(--color-danger)", color: "var(--color-danger)" };
-  }
-  return undefined;
-}
+import { MyJob } from "@/types/job";
 
 function MyJobsPageContent() {
+  useDocumentTitle("My jobs");
   const { getAccessToken } = useAuth();
   const [page, setPage] = usePageParam();
   const { jobs, pagination, isLoading, error, refetch } = useMyJobs(page);
@@ -94,12 +80,8 @@ function MyJobsPageContent() {
       <div className="divide-y" style={{ borderColor: "var(--color-border)" }}>
         {!showSkeleton &&
           !error &&
-          jobs.map((job, i) => (
-            <div
-              key={job.id}
-              className={`py-4 ${i === 0 ? "" : "border-t"}`}
-              style={{ borderColor: "var(--color-border)" }}
-            >
+          jobs.map((job) => (
+            <div key={job.id} className="py-4">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <Link
@@ -118,9 +100,7 @@ function MyJobsPageContent() {
                     view{job.view_count === 1 ? "" : "s"}
                   </p>
                 </div>
-                <Badge variant="outline" style={statusStyle(job.status)}>
-                  {STATUS_LABELS[job.status]}
-                </Badge>
+                <StatusBadge kind="job" status={job.status} />
               </div>
 
               <div className="mt-3 flex flex-wrap gap-2">

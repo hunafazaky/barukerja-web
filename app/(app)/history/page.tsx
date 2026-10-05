@@ -1,5 +1,6 @@
 "use client";
 
+import { useDocumentTitle } from "@/hooks/use-document-title";
 import { Suspense } from "react";
 import Link from "next/link";
 import { DeletedJobNotice } from "@/components/deleted-job-notice";
@@ -12,6 +13,7 @@ import { useHistory } from "@/hooks/use-history";
 import { useClampPage, usePageParam } from "@/hooks/use-page-param";
 
 function HistoryPageContent() {
+  useDocumentTitle("Recently viewed");
   const [page, setPage] = usePageParam();
   const { entries, pagination, isLoading, error } = useHistory(page);
 
@@ -44,12 +46,8 @@ function HistoryPageContent() {
       <div className="divide-y" style={{ borderColor: "var(--color-border)" }}>
         {!showSkeleton &&
           !error &&
-          entries.map((entry, i) => (
-            <div
-              key={entry.id}
-              className={`py-4 ${i === 0 ? "" : "border-t"}`}
-              style={{ borderColor: "var(--color-border)" }}
-            >
+          entries.map((entry) => (
+            <div key={entry.id} className="py-4">
               {entry.job ? (
                 <>
                   <Link

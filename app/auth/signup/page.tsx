@@ -1,11 +1,13 @@
 "use client";
 
+import { useDocumentTitle } from "@/hooks/use-document-title";
 import { SignupForm } from "@/components/signup-form";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export default function SignupPage() {
+  useDocumentTitle("Create account");
   const { user, isLoading } = useAuth();
   const router = useRouter();
 

@@ -111,18 +111,18 @@ mock API in Chromium at 375 px and 1280 px (2026-10-03). Status: ☐ todo,
 
 ### Phase 2 — UI & responsive polish ☐ (CSS/markup only; screenshot before/after)
 
-- ☐ P2-01 Horizontal overflow on mobile (and desktop for a long title): add `min-w-0 break-words` to flex text columns in `job-card`, list rows, applicants (long email), company page, job detail heading, status badges.
-- ☐ P2-02 Double 2 px dividers: drop the manual `border-t` where `divide-y` is used; remove `px-1` indent on `JobCard` (4 px misaligned with headings).
-- ☐ P2-03 Signup: "Confirm Password" wraps and misaligns the two inputs at 375 px (stack on mobile / shorter label).
-- ☐ P2-04 Job form: 3-column salary row cramped at 375 px; description box ignores `rows` (64 px) → set a real `min-h`.
-- ☐ P2-05 `viewport-fit=cover` (Next `viewport` export) so the bottom nav's `safe-area-inset-bottom` works; recheck `pb-24` content padding.
-- ☐ P2-06 Tap targets: header links/Sign out are ~20 px tall → ≥ 40 px hit area.
-- ☐ P2-07 Radius consistency (square buttons/inputs vs `rounded-md` cards/links) — pick one language.
-- ☐ P2-08 `SiteLoader`: full-screen overlay with "still connecting to the database…" on every guard → inline variant + neutral copy.
-- ☐ P2-09 Per-page `<title>`s (everything is "BaruKerja"), `not-found.tsx`, `loading.tsx`.
-- ☐ P2-10 Status colours/labels duplicated in 4 pages → shared module/tokens; `Badge` border props are dead.
-- ☐ P2-11 Job description: render paragraphs/bullets nicely (currently `whitespace-pre-wrap` raw text).
-- ☐ P2-12 Re-run screenshot sweep at 375 / 768 / 1280.
+- ☑ P2-01 Horizontal overflow on mobile (and desktop for a long title): add `min-w-0 break-words` to flex text columns in `job-card`, list rows, applicants (long email), company page, job detail heading, status badges.
+- ☑ P2-02 Double 2 px dividers: drop the manual `border-t` where `divide-y` is used; remove `px-1` indent on `JobCard` (4 px misaligned with headings).
+- ☑ P2-03 Signup: "Confirm Password" wraps and misaligns the two inputs at 375 px (stack on mobile / shorter label).
+- ☑ P2-04 Job form: 3-column salary row cramped at 375 px; description box ignores `rows` (64 px) → set a real `min-h`.
+- ☑ P2-05 `viewport-fit=cover` (Next `viewport` export) so the bottom nav's `safe-area-inset-bottom` works; recheck `pb-24` content padding.
+- ☑ P2-06 Tap targets: header links/Sign out are ~20 px tall → ≥ 40 px hit area.
+- ☐ P2-07 (deferred — design call, not a bug) Radius consistency (square buttons/inputs vs `rounded-md` cards/links) — pick one language.
+- ☑ P2-08 `SiteLoader`: full-screen overlay with "still connecting to the database…" on every guard → inline variant + neutral copy.
+- ☑ P2-09 Per-page `<title>`s (everything is "BaruKerja"), `not-found.tsx`, `loading.tsx`.
+- ☑ P2-10 Status colours/labels duplicated in 4 pages → shared module/tokens; `Badge` border props are dead.
+- ☑ P2-11 Job description: render paragraphs/bullets nicely (currently `whitespace-pre-wrap` raw text).
+- ☑ P2-12 Re-run screenshot sweep at 375 / 768 / 1280.
 
 ### Phase 3 — Hardening & cleanup ☐
 
@@ -143,8 +143,16 @@ auth/presign (B4), clearing fields (B5), deadline semantics (B6), body-size
 limit (B7), rate limiter (B8), refresh revocation (B9), owner views (B10),
 "already applied" (B11), message consistency (B12).
 
+### Phase 2 notes
+
+- `components/site-loader.tsx` must stay `"use client"` (used from the server component `app/(app)/loading.tsx`; the icon lib breaks otherwise).
+- Shared: `lib/job-format.ts`, `lib/status.ts` + `StatusBadge`, `JobDescription`, `hooks/use-document-title.ts` (call in every page), `app/not-found.tsx`.
+- Long text in flex rows needs `min-w-0` + `wrap-anywhere`; don't combine `divide-y` with `border-t`.
+- `node e2e/screenshots.mjs [outDir] [baseURL]` (with `PW_CHROMIUM`) sweeps 15 pages x 375/768/1280 and fails on horizontal overflow; e2e also has overflow tests at 375 px.
+
 ## Progress log
 
 - 2026-10-03 — Review of both repos; screenshots + behaviour checks against a mock API (findings above).
 - 2026-10-03 — Phase 0 done: baseline commit, e2e suite (16 red on original code).
 - 2026-10-04 — Phase 1 done: `useApiQuery`, safe redirect, confirm dialogs, null-job guards, job/company form fixes, error boundaries. typecheck + lint clean, e2e 22/22. Added `docs/BACKEND-SUGGESTIONS.md` and this file.
+- 2026-10-04 — Phase 2 done (P2-07 deferred): overflow 11 → 0 page/width combos, titles, shared status/format helpers, loader, not-found. typecheck + lint clean, e2e 29/29. `next build` unverifiable in sandbox (Google Fonts blocked) — run it locally.

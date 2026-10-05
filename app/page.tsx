@@ -13,5 +13,5 @@ export default function RootPage() {
     router.replace("/jobs");
   }, [router]);
 
-  return <SiteLoader />;
+  return <SiteLoader fullscreen />;
 }

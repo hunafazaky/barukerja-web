@@ -1,5 +1,6 @@
 "use client";
 
+import { useDocumentTitle } from "@/hooks/use-document-title";
 import { Suspense, useState } from "react";
 import { useParams } from "next/navigation";
 import { ConfirmDialog } from "@/components/confirm-dialog";
@@ -7,7 +8,8 @@ import { InlineError } from "@/components/inline-error";
 import { PageHeader } from "@/components/page-header";
 import { RequireAuth } from "@/components/require-auth";
 import { PaginationControls } from "@/components/pagination-controls";
-import { Badge } from "@/components/ui/badge";
+import { APPLICATION_STATUS_LABELS } from "@/lib/status";
+import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/context/AuthContext";
@@ -25,31 +27,8 @@ import {
   JobApplicant,
 } from "@/types/application";
 
-const STATUS_LABELS: Record<ApplicationStatus, string> = {
-  applied: "Applied",
-  reviewed: "Reviewed",
-  interview: "Interview",
-  accepted: "Accepted",
-  rejected: "Rejected",
-};
-
-function statusStyle(status: ApplicationStatus) {
-  if (status === "accepted") {
-    return { borderColor: "var(--color-brand)", color: "var(--color-brand)" };
-  }
-  if (status === "rejected") {
-    return { borderColor: "var(--color-danger)", color: "var(--color-danger)" };
-  }
-  if (status === "interview") {
-    return {
-      borderColor: "var(--color-highlight)",
-      color: "var(--color-highlight)",
-    };
-  }
-  return undefined;
-}
-
 function ApplicantsPageContent() {
+  useDocumentTitle("Applicants");
   const { id: jobId } = useParams<{ id: string }>();
   const { getAccessToken } = useAuth();
   const [page, setPage] = usePageParam();
@@ -127,16 +106,12 @@ function ApplicantsPageContent() {
       <div className="divide-y" style={{ borderColor: "var(--color-border)" }}>
         {!showSkeleton &&
           !error &&
-          applicants.map((applicant, i) => {
+          applicants.map((applicant) => {
             const nextStatuses = ALLOWED_STATUS_TRANSITIONS[applicant.status];
             const isBusy = busyId === applicant.id;
 
             return (
-              <div
-                key={applicant.id}
-                className={`py-4 ${i === 0 ? "" : "border-t"}`}
-                style={{ borderColor: "var(--color-border)" }}
-              >
+              <div key={applicant.id} className="py-4">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p
@@ -152,12 +127,7 @@ function ApplicantsPageContent() {
                       {applicant.applicant.email}
                     </p>
                   </div>
-                  <Badge
-                    variant="outline"
-                    style={statusStyle(applicant.status)}
-                  >
-                    {STATUS_LABELS[applicant.status]}
-                  </Badge>
+                  <StatusBadge kind="application" status={applicant.status} />
                 </div>
 
                 {applicant.cover_letter && (
@@ -192,7 +162,7 @@ function ApplicantsPageContent() {
                           : undefined
                       }
                     >
-                      Mark as {STATUS_LABELS[nextStatus]}
+                      Mark as {APPLICATION_STATUS_LABELS[nextStatus]}
                     </Button>
                   ))}
                 </div>

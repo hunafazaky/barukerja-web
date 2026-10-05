@@ -1,5 +1,6 @@
 "use client";
 
+import { useDocumentTitle } from "@/hooks/use-document-title";
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -13,32 +14,13 @@ import { InlineError } from "@/components/inline-error";
 import { useApiQuery } from "@/hooks/use-api-query";
 import { useBookmark } from "@/hooks/use-bookmark";
 import { getJobById } from "@/lib/job.api";
+import { JobDescription } from "@/components/job-description";
+import {
+  formatSalary,
+  JOB_TYPE_LABELS,
+  WORK_MODE_LABELS,
+} from "@/lib/job-format";
 import { Job } from "@/types/job";
-
-const WORK_MODE_LABELS: Record<Job["work_mode"], string> = {
-  onsite: "On-site",
-  hybrid: "Hybrid",
-  remote: "Remote",
-};
-
-const JOB_TYPE_LABELS: Record<Job["job_type"], string> = {
-  full_time: "Full-time",
-  part_time: "Part-time",
-  contract: "Contract",
-  internship: "Internship",
-  volunteer: "Volunteer",
-};
-
-function formatSalary(job: Job): string | null {
-  if (!job.salary_min && !job.salary_max) return null;
-  const currency = job.currency ? `${job.currency} ` : "";
-  const format = (n: number) => n.toLocaleString();
-  if (job.salary_min && job.salary_max) {
-    return `${currency}${format(job.salary_min)}–${format(job.salary_max)}`;
-  }
-  if (job.salary_min) return `${currency}${format(job.salary_min)}+`;
-  return `Up to ${currency}${format(job.salary_max as number)}`;
-}
 
 // A job only accepts applications while it is "open" AND its deadline (if
 // any) hasn't passed. The jobs list already hides expired jobs, but the
@@ -73,12 +55,13 @@ export default function JobDetailPage() {
   });
 
   const bookmark = useBookmark(id);
+  useDocumentTitle(job ? `${job.title} at ${job.company.name}` : undefined);
 
   return (
     <>
       <Link
         href="/jobs"
-        className="text-sm"
+        className="inline-flex min-h-10 items-center text-sm"
         style={{ color: "var(--color-text-muted)" }}
       >
         ← Back to jobs
@@ -98,17 +81,17 @@ export default function JobDetailPage() {
 
       {!isLoading && !error && job && (
         <>
-          <div className="mt-6 flex items-start justify-between gap-4">
-            <div>
+          <div className="mt-4 flex items-start justify-between gap-4">
+            <div className="min-w-0">
               <h1
-                className="text-3xl font-black"
+                className="text-2xl font-black sm:text-3xl"
                 style={{ fontFamily: "var(--font-heading)" }}
               >
                 {job.title}
               </h1>
               <Link
                 href={`/companies/${job.company.id}`}
-                className="mt-1 inline-block text-sm font-medium hover:underline"
+                className="mt-1 inline-block py-1 text-sm font-medium hover:underline"
                 style={{ color: "var(--color-brand)" }}
               >
                 {job.company.name}
@@ -124,6 +107,7 @@ export default function JobDetailPage() {
               <Button
                 variant="outline"
                 size="sm"
+                className="shrink-0"
                 disabled={!bookmark.isSignedIn || bookmark.isToggling}
                 onClick={bookmark.toggle}
                 title={
@@ -173,12 +157,7 @@ export default function JobDetailPage() {
 
           <Separator className="my-6" />
 
-          <div
-            className="prose max-w-none whitespace-pre-wrap text-[15px] leading-relaxed"
-            style={{ color: "var(--color-text)" }}
-          >
-            {job.description}
-          </div>
+          <JobDescription text={job.description} />
 
           {job.categories.length > 0 && (
             <div className="mt-6 flex flex-wrap gap-2">

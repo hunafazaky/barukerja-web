@@ -1,5 +1,6 @@
 "use client";
 
+import { useDocumentTitle } from "@/hooks/use-document-title";
 import { Suspense } from "react";
 import { SigninForm } from "@/components/signin-form";
 import { useAuth } from "@/context/AuthContext";
@@ -8,6 +9,7 @@ import { safeNextPath } from "@/lib/safe-redirect";
 import { useEffect } from "react";
 
 function SigninPageContent() {
+  useDocumentTitle("Sign in");
   const { user, isLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();

@@ -1,15 +1,16 @@
 "use client";
 
+import { InlineError } from "@/components/inline-error";
 import { JobCard } from "@/components/job-card";
 import { PaginationControls } from "@/components/pagination-controls";
 import { JobListResult } from "@/types/job";
 
 function JobCardSkeleton() {
   return (
-    <div className="animate-pulse px-1 py-4">
-      <div className="h-5 w-2/3 rounded bg-black/10" />
-      <div className="mt-2 h-4 w-1/2 rounded bg-black/5" />
-      <div className="mt-3 h-4 w-1/3 rounded bg-black/5" />
+    <div className="animate-pulse py-4">
+      <div className="h-5 w-2/3 bg-black/10" />
+      <div className="mt-2 h-4 w-1/2 bg-black/5" />
+      <div className="mt-3 h-4 w-1/3 bg-black/5" />
     </div>
   );
 }
@@ -44,29 +45,15 @@ export function JobListSection({
         style={{ borderColor: "var(--color-border)" }}
       >
         {isLoading &&
-          Array.from({ length: 5 }).map((_, i) => (
-            <div
-              key={i}
-              className="border-t first:border-t-0"
-              style={{ borderColor: "var(--color-border)" }}
-            >
-              <JobCardSkeleton />
-            </div>
-          ))}
+          Array.from({ length: 5 }).map((_, i) => <JobCardSkeleton key={i} />)}
 
         {!isLoading && error && (
-          <div
-            className="rounded-md border px-4 py-6 text-sm"
-            style={{
-              borderColor: "var(--color-danger)",
-              color: "var(--color-danger)",
-            }}
-          >
+          <InlineError className="py-6">
             {error}{" "}
             <button onClick={refetch} className="ml-1 underline">
               Try again
             </button>
-          </div>
+          </InlineError>
         )}
 
         {!isLoading && !error && jobs.length === 0 && (
@@ -80,15 +67,7 @@ export function JobListSection({
 
         {!isLoading &&
           !error &&
-          jobs.map((job, i) => (
-            <div
-              key={job.id}
-              className={i === 0 ? "" : "border-t"}
-              style={{ borderColor: "var(--color-border)" }}
-            >
-              <JobCard job={job} />
-            </div>
-          ))}
+          jobs.map((job) => <JobCard key={job.id} job={job} />)}
       </div>
 
       {!isLoading && !error && pagination && pagination.totalPages > 1 && (

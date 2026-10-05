@@ -15,22 +15,9 @@ import {
 } from "@/components/ui/select";
 import { useAuth } from "@/context/AuthContext";
 import { createJob, updateJob } from "@/lib/job.api";
+import { JOB_TYPE_LABELS, WORK_MODE_LABELS } from "@/lib/job-format";
 import { ApiError } from "@/types/api";
 import { Job, JobFormInput, JobStatus, JobType, WorkMode } from "@/types/job";
-
-const WORK_MODE_LABELS: Record<WorkMode, string> = {
-  onsite: "On-site",
-  hybrid: "Hybrid",
-  remote: "Remote",
-};
-
-const JOB_TYPE_LABELS: Record<JobType, string> = {
-  full_time: "Full-time",
-  part_time: "Part-time",
-  contract: "Contract",
-  internship: "Internship",
-  volunteer: "Volunteer",
-};
 
 const STATUS_LABELS: Record<JobStatus, string> = {
   draft: "Draft (not visible to seekers)",
@@ -245,6 +232,7 @@ export function JobForm({
         <FieldLabel htmlFor="job-description">Description</FieldLabel>
         <Textarea
           id="job-description"
+          className="min-h-48"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={8}
@@ -317,7 +305,7 @@ export function JobForm({
         />
       </Field>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
         <Field>
           <FieldLabel htmlFor="job-salary-min">Min salary</FieldLabel>
           <Input
@@ -338,7 +326,7 @@ export function JobForm({
             onChange={(e) => setSalaryMax(e.target.value)}
           />
         </Field>
-        <Field>
+        <Field className="col-span-2 sm:col-span-1">
           <FieldLabel htmlFor="job-currency">Currency</FieldLabel>
           <Input
             id="job-currency"
