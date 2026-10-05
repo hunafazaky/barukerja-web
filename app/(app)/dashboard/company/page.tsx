@@ -2,6 +2,7 @@
 
 import { useDocumentTitle } from "@/hooks/use-document-title";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { InlineError } from "@/components/inline-error";
 import { PageHeader } from "@/components/page-header";
 import { RequireAuth } from "@/components/require-auth";
@@ -13,6 +14,7 @@ function CompanyPageContent() {
   useDocumentTitle("Company profile");
   const router = useRouter();
   const { company, isLoading, error, refetch } = useMyCompany();
+  const [saved, setSaved] = useState(false);
 
   return (
     <>
@@ -38,11 +40,23 @@ function CompanyPageContent() {
               You&apos;ll need a company profile before you can post jobs.
             </p>
           )}
+          {saved && (
+            <p
+              role="status"
+              className="mb-4 text-sm"
+              style={{ color: "var(--color-success, var(--color-text-muted))" }}
+            >
+              Company profile saved.
+            </p>
+          )}
           <CompanyForm
             existingCompany={company ?? undefined}
             onSuccess={() => {
               refetch();
-              router.push("/dashboard/jobs");
+              // First save = onboarding, so continue to posting jobs.
+              // Editing an existing profile stays here with a confirmation.
+              if (company) setSaved(true);
+              else router.push("/dashboard/jobs");
             }}
           />
         </>

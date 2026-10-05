@@ -342,3 +342,77 @@ test.describe("responsive", () => {
     });
   }
 });
+
+test.describe("phase 3", () => {
+  test("upload route rejects anonymous requests", async ({ request }) => {
+    const res = await request.post("/api/upload", {
+      multipart: {
+        kind: "cv",
+        file: {
+          name: "a.pdf",
+          mimeType: "application/pdf",
+          buffer: Buffer.from("%PDF"),
+        },
+      },
+    });
+    expect(res.status()).toBe(401);
+  });
+
+  test("search is debounced: typing fast sends one query", async ({ page }) => {
+    await page.goto("/jobs");
+    await page.waitForLoadState("networkidle");
+    const before = (await getLog()).filter(
+      (e) => e.method === "GET" && e.path === "/api/jobs",
+    ).length;
+    await page.getByRole("searchbox").click();
+    await page.keyboard.type("barista", { delay: 40 });
+    await page.waitForTimeout(1200);
+    const after = (await getLog()).filter(
+      (e) => e.method === "GET" && e.path === "/api/jobs",
+    ).length;
+    expect(after - before).toBe(1);
+  });
+
+  test("sign-in uses the returned user (no extra profile fetch)", async ({
+    page,
+  }) => {
+    await page.goto("/auth/signin");
+    await page.getByLabel(/email/i).fill("seeker@example.com");
+    await page.getByLabel(/password/i).fill("Passw0rd1");
+    await page.getByRole("button", { name: /sign in/i }).click();
+    await expect(page).toHaveURL(/\/jobs/);
+    expect(await count("GET", /^\/api\/users\/[\w-]+$/)).toBe(0);
+  });
+
+  test("retrying a failed application reuses the uploaded CV", async ({
+    page,
+    context,
+  }) => {
+    await signedIn(context, "seeker");
+    let uploads = 0;
+    await page.route("**/api/upload", (r) => {
+      uploads++;
+      return r.fulfill({ json: { key: "applications/cvs/x.pdf" } });
+    });
+    let posts = 0;
+    await page.route("**/api/applications", (r) => {
+      if (r.request().method() !== "POST") return r.fallback();
+      posts++;
+      return posts === 1
+        ? r.fulfill({ status: 500, json: { message: "Boom" } })
+        : r.fallback();
+    });
+    await page.goto("/jobs/job-1");
+    await page.getByRole("button", { name: "Apply", exact: true }).click();
+    await page.setInputFiles("#cv-upload", {
+      name: "cv.pdf",
+      mimeType: "application/pdf",
+      buffer: Buffer.from("%PDF-1.4"),
+    });
+    await page.getByRole("button", { name: /submit application/i }).click();
+    await expect(page.getByText("Boom")).toBeVisible();
+    await page.getByRole("button", { name: /submit application/i }).click();
+    await expect(page.getByText(/application submitted/i)).toBeVisible();
+    expect(uploads).toBe(1);
+  });
+});

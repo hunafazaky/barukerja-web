@@ -124,17 +124,17 @@ mock API in Chromium at 375 px and 1280 px (2026-10-03). Status: ☐ todo,
 - ☑ P2-11 Job description: render paragraphs/bullets nicely (currently `whitespace-pre-wrap` raw text).
 - ☑ P2-12 Re-run screenshot sweep at 375 / 768 / 1280.
 
-### Phase 3 — Hardening & cleanup ☐
+### Phase 3 — Hardening & cleanup ☑
 
-- ☐ P3-01 `/api/upload`: require a valid access token, derive extension from validated MIME, wrap `formData()` in try/catch, clear 413/400s; warn client-side above ~4.5 MB on Vercel (or move to presigned uploads — backend B4).
-- ☐ P3-02 Use the `user` already returned by signin/signup (skip the extra `GET /users/:id`).
-- ☐ P3-03 Debounce job search (~300 ms).
-- ☐ P3-04 Signup password hint: backend also requires a lowercase letter.
-- ☐ P3-05 ApplyForm re-uploads the CV on every retry after a failed submit (orphan files) → reuse the uploaded key.
-- ☐ P3-06 Company page: saving an existing company redirects to `/dashboard/jobs` — confirm intent.
-- ☐ P3-07 Remove dead code: unused `public/*.svg`, `components/ui/sonner` (no Toaster mounted) or mount it, dark tokens (or add a theme provider), self-referential `--font-sans: var(--font-sans)` in `globals.css`.
-- ☐ P3-08 Rewrite `README.md` (still describes a "reading platform"); fix stale comments in `types/user.ts` (signin _does_ return `user`).
-- ☐ P3-09 Accessibility pass: duplicate `<h1>` on auth pages, focus after dialogs, label associations.
+- ☑ P3-01 `/api/upload`: require a valid access token, derive extension from validated MIME, wrap `formData()` in try/catch, clear 413/400s; warn client-side above ~4.5 MB on Vercel (or move to presigned uploads — backend B4).
+- ☑ P3-02 Use the `user` already returned by signin/signup (skip the extra `GET /users/:id`).
+- ☑ P3-03 Debounce job search (~300 ms).
+- ☑ P3-04 Signup password hint: backend also requires a lowercase letter.
+- ☑ P3-05 ApplyForm re-uploads the CV on every retry after a failed submit (orphan files) → reuse the uploaded key.
+- ☑ P3-06 Company page: saving an existing company redirects to `/dashboard/jobs` — confirm intent.
+- ☑ P3-07 Remove dead code: unused `public/*.svg`, `components/ui/sonner` (no Toaster mounted) or mount it, dark tokens (or add a theme provider), self-referential `--font-sans: var(--font-sans)` in `globals.css`.
+- ☑ P3-08 Rewrite `README.md` (still describes a "reading platform"); fix stale comments in `types/user.ts` (signin _does_ return `user`).
+- ☑ P3-09 Accessibility pass: duplicate `<h1>` on auth pages, focus after dialogs, label associations.
 
 ### Out of scope here (API repo) — see `docs/BACKEND-SUGGESTIONS.md`
 
@@ -150,9 +150,19 @@ limit (B7), rate limiter (B8), refresh revocation (B9), owner views (B10),
 - Long text in flex rows needs `min-w-0` + `wrap-anywhere`; don't combine `divide-y` with `border-t`.
 - `node e2e/screenshots.mjs [outDir] [baseURL]` (with `PW_CHROMIUM`) sweeps 15 pages x 375/768/1280 and fails on horizontal overflow; e2e also has overflow tests at 375 px.
 
+### Phase 3 notes
+
+- `/api/upload` needs a Bearer token (structural + expiry check only — no secret here; real enforcement = backend B4). `uploadFile(file, kind, accessToken)`. Extension comes from the MIME type; oversize → 413.
+- signin/signup return `user`; refresh does not (`AuthResponse.user` optional).
+- `--font-sans: var(--font-sans)` in globals.css is intentional (next/font runtime var) — do not remove.
+- P3-06: company edit now stays on the page ("saved" message); first-time create still goes to `/dashboard/jobs`. Revert if you wanted the redirect on edit.
+- P3-07: removed unused `public/*.svg`, `components/ui/sonner.tsx`, and the `sonner`/`next-themes` deps; `.dark` tokens left in place (harmless, no theme switcher).
+- P3-09: duplicate `<h1>` on auth pages fixed (wordmark is a `<p>`); all labels already had `htmlFor`.
+
 ## Progress log
 
 - 2026-10-03 — Review of both repos; screenshots + behaviour checks against a mock API (findings above).
 - 2026-10-03 — Phase 0 done: baseline commit, e2e suite (16 red on original code).
 - 2026-10-04 — Phase 1 done: `useApiQuery`, safe redirect, confirm dialogs, null-job guards, job/company form fixes, error boundaries. typecheck + lint clean, e2e 22/22. Added `docs/BACKEND-SUGGESTIONS.md` and this file.
 - 2026-10-04 — Phase 2 done (P2-07 deferred): overflow 11 → 0 page/width combos, titles, shared status/format helpers, loader, not-found. typecheck + lint clean, e2e 29/29. `next build` unverifiable in sandbox (Google Fonts blocked) — run it locally.
+- 2026-10-05 — Phase 3 done: upload hardening, user from signin, debounced search, apply-retry reuse, README rewrite, dead code removed. typecheck + lint clean, e2e 33/33.

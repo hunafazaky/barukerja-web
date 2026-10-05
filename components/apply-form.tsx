@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { FileUploadField } from "@/components/file-upload-field";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -30,6 +30,9 @@ export function ApplyForm({
   const [coverLetter, setCoverLetter] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Remember the uploaded CV so a retry after a failed submit reuses it
+  // instead of uploading (and orphaning) another copy.
+  const uploaded = useRef<{ file: File; key: string } | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -39,14 +42,17 @@ export function ApplyForm({
     setError(null);
 
     try {
-      const uploadResult = await uploadFile(cvFile, "cv");
-      if (!uploadResult.key) {
-        throw new Error("Upload succeeded but didn't return a storage key.");
+      if (uploaded.current?.file !== cvFile) {
+        const uploadResult = await uploadFile(cvFile, "cv", accessToken);
+        if (!uploadResult.key) {
+          throw new Error("Upload succeeded but didn't return a storage key.");
+        }
+        uploaded.current = { file: cvFile, key: uploadResult.key };
       }
       await createApplication(
         {
           jobId,
-          cv_key: uploadResult.key,
+          cv_key: uploaded.current.key,
           cover_letter: coverLetter.trim() || undefined,
         },
         accessToken,

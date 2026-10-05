@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/page-header";
 import { JobListSection } from "@/components/job-list";
 import { useJobs } from "@/hooks/use-jobs";
 import { useClampPage, usePageParam } from "@/hooks/use-page-param";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { Input } from "@/components/ui/input";
 
 // Public — no sign-in required to browse. Signing in just adds
@@ -14,7 +15,13 @@ function JobsPageContent() {
   useDocumentTitle("Find work");
   const [page, setPage] = usePageParam();
   const [q, setQ] = useState("");
-  const jobsData = useJobs({ page, q: q || undefined, sort: "newest" });
+  // Query the API 300 ms after the last keystroke, not on every one.
+  const debouncedQ = useDebouncedValue(q.trim(), 300);
+  const jobsData = useJobs({
+    page,
+    q: debouncedQ || undefined,
+    sort: "newest",
+  });
   useClampPage(page, jobsData.pagination, setPage);
 
   return (

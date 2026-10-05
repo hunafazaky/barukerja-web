@@ -40,6 +40,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  /* Looks self-referential but isn't: the right-hand side is the runtime
+     variable next/font sets in layout.tsx. Don't remove it. */
   --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-archivo);

@@ -60,8 +60,8 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 // ==================================================
 // Turn a raw access token into a full User profile.
 //
-// The signin/signup/refresh endpoints only return { accessToken } — no
-// user data. So we:
+// signin/signup return the user directly (used as-is); refresh only returns
+// { accessToken }. For refresh, and as a fallback, we:
 //   1. Decode the token to read the user's id (it's baked into the JWT,
 //      no API call needed for this part).
 //   2. Fetch the full profile with that id via GET /api/users/:id.
@@ -184,7 +184,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ==================================================
   async function signin(email: string, password: string) {
     const data = await apiSignin(email, password);
-    const signedInUser = await loadUserFromToken(data.accessToken);
+    const signedInUser =
+      data.user ?? (await loadUserFromToken(data.accessToken));
 
     if (!signedInUser) {
       throw new Error(
@@ -209,7 +210,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     role?: "seeker" | "employer";
   }) {
     const data = await apiSignup(input);
-    const newUser = await loadUserFromToken(data.accessToken);
+    const newUser = data.user ?? (await loadUserFromToken(data.accessToken));
 
     if (!newUser) {
       throw new Error(

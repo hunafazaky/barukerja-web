@@ -88,12 +88,12 @@ export function SignupForm({
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <h1
+      <p
         className="text-center md:text-6xl text-4xl font-black"
         style={{ fontFamily: "var(--font-heading)" }}
       >
         BaruKerja
-      </h1>
+      </p>
       <Card className="overflow-hidden p-0 mx-auto w-full max-w-md">
         <CardContent className="p-0">
           <form className="p-6 md:p-8" onSubmit={handleSubmit}>
@@ -223,7 +223,8 @@ export function SignupForm({
                   </Field>
                 </Field>
                 <FieldDescription>
-                  Must be at least 8 characters long, 1 uppercase and 1 number.
+                  At least 8 characters, with an uppercase letter, a lowercase
+                  letter and a number.
                 </FieldDescription>
                 {errorMessage && (
                   <FieldDescription className="text-destructive">

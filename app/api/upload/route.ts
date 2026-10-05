@@ -2,6 +2,32 @@ import { NextRequest, NextResponse } from "next/server";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { randomUUID } from "crypto";
 import { getUploadRules } from "@/lib/upload-constraints";
+import { decodeJwtPayload } from "@/lib/jwt";
+
+// MIME type -> file extension. The extension comes from the validated
+// type, never from the client-supplied filename.
+const EXTENSIONS: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+  "image/gif": "gif",
+  "application/pdf": "pdf",
+};
+
+// We can't verify the JWT signature here (the secret lives on the API), so
+// this only rejects anonymous / malformed / expired tokens. It stops casual
+// abuse of the bucket; real enforcement needs the API to issue presigned
+// uploads (docs/BACKEND-SUGGESTIONS.md B4).
+function hasUsableToken(request: NextRequest): boolean {
+  const header = request.headers.get("authorization") ?? "";
+  const token = header.startsWith("Bearer ") ? header.slice(7) : "";
+  const payload = token ? decodeJwtPayload(token) : null;
+  return (
+    !!payload &&
+    typeof payload.exp === "number" &&
+    payload.exp * 1000 > Date.now()
+  );
+}
 
 // Route Handlers run on the server (Node.js runtime by default in
 // Next.js), so it's safe to use the real R2 secret key here — it never
@@ -30,6 +56,13 @@ function getR2Client() {
 }
 
 export async function POST(request: NextRequest) {
+  if (!hasUsableToken(request)) {
+    return NextResponse.json(
+      { message: "Please sign in to upload files." },
+      { status: 401 },
+    );
+  }
+
   const bucketName = process.env.CLOUDFLARE_R2_BUCKET_NAME;
   const publicUrlBase = process.env.CLOUDFLARE_R2_PUBLIC_URL;
 
@@ -40,7 +73,15 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const formData = await request.formData();
+  let formData: FormData;
+  try {
+    formData = await request.formData();
+  } catch {
+    return NextResponse.json(
+      { message: "The upload couldn't be read. Try a smaller file." },
+      { status: 400 },
+    );
+  }
   const file = formData.get("file");
   const kind = formData.get("kind");
 
@@ -89,7 +130,7 @@ export async function POST(request: NextRequest) {
       {
         message: `File is too large. Max size is ${Math.round(maxSize / (1024 * 1024))}MB.`,
       },
-      { status: 400 },
+      { status: 413 },
     );
   }
 
@@ -119,9 +160,7 @@ export async function POST(request: NextRequest) {
         : kind === "cv"
           ? "applications/cvs"
           : "attachments";
-  const extension = file.name.includes(".")
-    ? file.name.split(".").pop()
-    : undefined;
+  const extension = EXTENSIONS[file.type];
   const key = `${keyPrefix}/${randomUUID()}${extension ? `.${extension}` : ""}`;
 
   try {

@@ -46,7 +46,7 @@ export function CompanyForm({
       // shouldn't force a re-upload of the existing one.
       let logoUrl = existingCompany?.logo;
       if (logoFile) {
-        const result = await uploadFile(logoFile, "logo");
+        const result = await uploadFile(logoFile, "logo", accessToken);
         logoUrl = result.url;
       }
 

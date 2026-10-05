@@ -1,118 +1,46 @@
-# Reading Platform Frontend
+# BaruKerja — web
 
-A modern reading and writing platform built with Next.js App Router, TypeScript, Tailwind CSS, and shadcn/ui components.
+Job board frontend: seekers browse and apply to jobs, bookmark them and track
+applications; employers manage a company profile, post jobs and review
+applicants. Built with Next.js 16 (App Router), React 19, TypeScript,
+Tailwind CSS v4 and shadcn/base-ui primitives. The backend lives in a separate
+repo (`barukerja-api`, Express + MongoDB).
 
-- **Live Demo:** https://hz-reading-platform.vercel.app/
-- **API Documentation:** https://hz-reading-platform.onrender.com/api-docs/
-- **Project:** User-authenticated reading dashboard with works management, bookmarking, history, publishing, rating, and file upload support.
+See `CLAUDE.md` for architecture notes, conventions and the improvement plan,
+and `docs/BACKEND-SUGGESTIONS.md` for suggested API changes.
 
-## Key Features
+## Getting started
 
-- Authentication flow with sign-in and sign-up pages
-- Dashboard sections for home, bookmarked items, reading history, published works, scored works, and writing new works
-- Read and edit individual works via nested routes
-- Upload and manage files via a backend API route
-- Responsive UI using Tailwind CSS and shadcn/ui primitives
-- Theme-aware interface with tooltips and animated components
+```bash
+cp .env.example .env.local   # fill in BACKEND_API_URL and CLOUDFLARE_R2_*
+npm install
+npm run dev                  # http://localhost:3000
+```
 
-## Tech Stack
+| Script                            | What it does                                       |
+| --------------------------------- | -------------------------------------------------- |
+| `npm run dev` / `build` / `start` | Next.js dev / production build / serve             |
+| `npm run lint`                    | ESLint                                             |
+| `npm run typecheck`               | `tsc --noEmit`                                     |
+| `npm run test:e2e`                | Playwright against a mock API (`e2e/mock-api.mjs`) |
 
-- Next.js 16 (App Router)
-- React 19
-- TypeScript
-- Tailwind CSS v4
-- shadcn/ui and Radix UI primitives
-- @aws-sdk/client-s3 for file upload integration
-- date-fns for date formatting
-- react-select, recharts, embla-carousel-react, input-otp for enhanced interaction
-- zod for runtime schema validation
-- sonner for toast notifications
+## How it works
 
-## Project Structure
+- The browser calls `/api/...` on this site; `next.config.ts` rewrites it to
+  `BACKEND_API_URL`. `/api/upload` is a local route handler that writes to
+  Cloudflare R2 (the credentials never reach the browser).
+- The access token is kept in memory only; the refresh token is an HttpOnly
+  cookie set by the API. `lib/api.ts` retries once after a silent refresh.
+- Data fetching goes through `hooks/use-api-query.ts`.
+
+## Structure
 
 ```text
-app/
-  layout.tsx
-  page.tsx
-  auth/
-    signin/page.tsx
-    signup/page.tsx
-  api/
-    upload/route.ts
-  (dashboard)/
-    home/page.tsx
-    bookmarked/page.tsx
-    history/page.tsx
-    published/page.tsx
-    scored/page.tsx
-    works/page.tsx
-    works/[id]/edit/page.tsx
-    works/[id]/read/page.tsx
-    works/write/page.tsx
-components/
-  app-sidebar.tsx
-  category-select.tsx
-  file-upload-field.tsx
-  signin-form.tsx
-  signup-form.tsx
-  site-header.tsx
-  work-card.tsx
-  work-form-write.tsx
-  work-read.tsx
-  work-pagination.tsx
-  ui/   (shared UI primitives)
-context/
-  AuthContext.tsx
-hooks/
-  use-work.ts
-  use-works.ts
-  use-bookmarked-works.ts
-  use-history-works.ts
-  use-published-works.ts
-lib/
-  api.ts
-  auth.api.ts
-  bookmark.api.ts
-  work.api.ts
-  upload.api.ts
-  jwt.ts
-  utils.ts
-types/
-  work.ts
-  api.ts
-  user.ts
-
+app/(app)/          jobs, companies, bookmarked, history, applications, dashboard/*
+app/auth/           signin, signup
+app/api/upload/     R2 upload route
+components/         feature components; ui/ holds primitives
+hooks/              data hooks (use-api-query and wrappers)
+lib/                api client, per-resource api modules, helpers
+e2e/                Playwright tests, mock API, screenshot sweep
 ```
-
-## Getting Started
-
-Install dependencies:
-
-```bash
-pnpm install
-```
-
-Run the development server:
-
-```bash
-pnpm dev
-```
-
-Open http://localhost:3000 in your browser.
-
-## Available Scripts
-
-- `pnpm dev` - Start the development server
-- `pnpm build` - Build the application for production
-- `pnpm start` - Start the production server
-- `pnpm lint` - Run ESLint
-
-## Notes
-
-- The application expects authenticated users before accessing the dashboard.
-- File upload support is implemented in `app/api/upload/route.ts`.
-- UI components are built with reusable shadcn/ui and custom primitives.
-
-## Contact
-
-For questions or improvements, open an issue or submit a pull request.

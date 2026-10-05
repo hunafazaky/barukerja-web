@@ -26,6 +26,7 @@ export interface UploadResult {
 export async function uploadFile(
   file: File,
   kind: "cover" | "attachment" | "cv" | "logo",
+  accessToken?: string | null,
 ): Promise<UploadResult> {
   const formData = new FormData();
   formData.append("file", file);
@@ -35,6 +36,9 @@ export async function uploadFile(
   try {
     response = await fetch("/api/upload", {
       method: "POST",
+      headers: accessToken
+        ? { Authorization: `Bearer ${accessToken}` }
+        : undefined,
       body: formData,
     });
   } catch {

@@ -14,20 +14,14 @@ export interface User {
   updatedAt: string;
 }
 
-// Shape returned by POST /api/users/signin, POST /api/users/signup, and
-// POST /api/users/refresh.
+// Shape returned by POST /api/users/signin and /signup: the access token plus
+// the user. POST /api/users/refresh returns ONLY { accessToken } (no user), so
+// `user` is optional here and the refresh path loads the profile separately.
 //
-// Confirmed from the real API response: it's ONLY the access token —
-// no user object included. (We originally assumed { accessToken, user },
-// which caused a bug where the signed-in user would "disappear" after a
-// page refresh — see AuthContext.tsx for how we now load the user
-// separately.)
-//
-// The backend also sets a refresh token as an HttpOnly cookie, but that
-// cookie is invisible to our JavaScript code (which is the point of it
-// being HttpOnly — it protects the refresh token from XSS attacks).
+// The refresh token itself is an HttpOnly cookie, invisible to JS.
 export interface AuthResponse {
   accessToken: string;
+  user?: User;
 }
 
 // The data we can decode directly out of the JWT access token itself,
