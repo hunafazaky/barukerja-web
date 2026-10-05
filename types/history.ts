@@ -6,6 +6,7 @@ import { JobSummary } from "@/types/job";
 // history.controller.createOrUpdate's upsert).
 export interface HistoryEntry {
   id: string;
-  job: JobSummary;
+  // null when the job no longer exists — see types/bookmark.ts.
+  job: JobSummary | null;
   last_read_at: string;
 }

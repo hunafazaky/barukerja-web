@@ -2,38 +2,36 @@
 
 import { Suspense } from "react";
 import Link from "next/link";
+import { DeletedJobNotice } from "@/components/deleted-job-notice";
+import { InlineError } from "@/components/inline-error";
 import { PageHeader } from "@/components/page-header";
 import { RequireAuth } from "@/components/require-auth";
 import { PaginationControls } from "@/components/pagination-controls";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useHistory } from "@/hooks/use-history";
-import { usePageParam } from "@/hooks/use-page-param";
+import { useClampPage, usePageParam } from "@/hooks/use-page-param";
 
 function HistoryPageContent() {
   const [page, setPage] = usePageParam();
   const { entries, pagination, isLoading, error } = useHistory(page);
 
+  useClampPage(page, pagination, setPage);
+  const showSkeleton =
+    isLoading || (!!pagination && page > Math.max(pagination.totalPages, 1));
+
   return (
     <>
       <PageHeader title="Recently viewed" />
-      {isLoading &&
+      {showSkeleton &&
         Array.from({ length: 3 }).map((_, i) => (
           <Skeleton key={i} className="mb-3 h-16 w-full" />
         ))}
 
-      {!isLoading && error && (
-        <div
-          className="rounded-md border px-4 py-6 text-sm"
-          style={{
-            borderColor: "var(--color-danger)",
-            color: "var(--color-danger)",
-          }}
-        >
-          {error}
-        </div>
+      {!showSkeleton && error && (
+        <InlineError className="py-6">{error}</InlineError>
       )}
 
-      {!isLoading && !error && entries.length === 0 && (
+      {!showSkeleton && !error && entries.length === 0 && (
         <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
           No viewed jobs yet.{" "}
           <Link href="/jobs" className="underline">
@@ -44,7 +42,7 @@ function HistoryPageContent() {
       )}
 
       <div className="divide-y" style={{ borderColor: "var(--color-border)" }}>
-        {!isLoading &&
+        {!showSkeleton &&
           !error &&
           entries.map((entry, i) => (
             <div
@@ -52,25 +50,31 @@ function HistoryPageContent() {
               className={`py-4 ${i === 0 ? "" : "border-t"}`}
               style={{ borderColor: "var(--color-border)" }}
             >
-              <Link
-                href={`/jobs/${entry.job.id}`}
-                className="font-bold hover:underline"
-                style={{ fontFamily: "var(--font-heading)" }}
-              >
-                {entry.job.title}
-              </Link>
-              <p
-                className="text-sm"
-                style={{ color: "var(--color-text-muted)" }}
-              >
-                {entry.job.company.name} · Viewed{" "}
-                {new Date(entry.last_read_at).toLocaleDateString()}
-              </p>
+              {entry.job ? (
+                <>
+                  <Link
+                    href={`/jobs/${entry.job.id}`}
+                    className="font-bold hover:underline"
+                    style={{ fontFamily: "var(--font-heading)" }}
+                  >
+                    {entry.job.title}
+                  </Link>
+                  <p
+                    className="text-sm"
+                    style={{ color: "var(--color-text-muted)" }}
+                  >
+                    {entry.job.company.name} · Viewed{" "}
+                    {new Date(entry.last_read_at).toLocaleDateString()}
+                  </p>
+                </>
+              ) : (
+                <DeletedJobNotice />
+              )}
             </div>
           ))}
       </div>
 
-      {!isLoading && !error && pagination && (
+      {!showSkeleton && !error && pagination && (
         <PaginationControls
           page={pagination.page}
           totalPages={pagination.totalPages}

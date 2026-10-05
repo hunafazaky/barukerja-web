@@ -2,6 +2,8 @@
 
 import { Suspense, useState } from "react";
 import Link from "next/link";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import { InlineError } from "@/components/inline-error";
 import { PageHeader } from "@/components/page-header";
 import { RequireAuth } from "@/components/require-auth";
 import { PaginationControls } from "@/components/pagination-controls";
@@ -10,9 +12,10 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/context/AuthContext";
 import { useMyJobs } from "@/hooks/use-my-jobs";
-import { usePageParam } from "@/hooks/use-page-param";
+import { useClampPage, usePageParam } from "@/hooks/use-page-param";
 import { deleteJob } from "@/lib/job.api";
-import { JobStatus } from "@/types/job";
+import { ApiError } from "@/types/api";
+import { JobStatus, MyJob } from "@/types/job";
 
 const STATUS_LABELS: Record<JobStatus, string> = {
   draft: "Draft",
@@ -31,26 +34,29 @@ function statusStyle(status: JobStatus) {
 }
 
 function MyJobsPageContent() {
-  const { accessToken } = useAuth();
+  const { getAccessToken } = useAuth();
   const [page, setPage] = usePageParam();
   const { jobs, pagination, isLoading, error, refetch } = useMyJobs(page);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<MyJob | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  useClampPage(page, pagination, setPage);
+  const showSkeleton =
+    isLoading || (!!pagination && page > Math.max(pagination.totalPages, 1));
 
   async function handleDelete(id: string) {
-    if (!accessToken) return;
-    if (
-      !confirm(
-        "Delete this job? If it already has applications, it will be closed instead.",
-      )
-    ) {
-      return;
-    }
-    setDeletingId(id);
+    const token = getAccessToken();
+    if (!token) return;
+    setActionError(null);
     try {
-      await deleteJob(id, accessToken);
+      await deleteJob(id, token);
       refetch();
-    } finally {
-      setDeletingId(null);
+    } catch (err) {
+      setActionError(
+        err instanceof ApiError
+          ? err.message
+          : "Couldn't delete this job. Please try again.",
+      );
     }
   }
 
@@ -68,31 +74,25 @@ function MyJobsPageContent() {
         }
       />
 
-      {isLoading &&
+      {actionError && <InlineError className="mb-4">{actionError}</InlineError>}
+
+      {showSkeleton &&
         Array.from({ length: 3 }).map((_, i) => (
           <Skeleton key={i} className="mb-3 h-20 w-full" />
         ))}
 
-      {!isLoading && error && (
-        <div
-          className="rounded-md border px-4 py-6 text-sm"
-          style={{
-            borderColor: "var(--color-danger)",
-            color: "var(--color-danger)",
-          }}
-        >
-          {error}
-        </div>
+      {!showSkeleton && error && (
+        <InlineError className="py-6">{error}</InlineError>
       )}
 
-      {!isLoading && !error && jobs.length === 0 && (
+      {!showSkeleton && !error && jobs.length === 0 && (
         <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
           You haven&apos;t posted any jobs yet.
         </p>
       )}
 
       <div className="divide-y" style={{ borderColor: "var(--color-border)" }}>
-        {!isLoading &&
+        {!showSkeleton &&
           !error &&
           jobs.map((job, i) => (
             <div
@@ -145,8 +145,7 @@ function MyJobsPageContent() {
                 <Button
                   variant="outline"
                   size="sm"
-                  disabled={deletingId === job.id}
-                  onClick={() => handleDelete(job.id)}
+                  onClick={() => setDeleteTarget(job)}
                   style={{ color: "var(--color-danger)" }}
                 >
                   Delete
@@ -156,13 +155,27 @@ function MyJobsPageContent() {
           ))}
       </div>
 
-      {!isLoading && !error && pagination && (
+      {!showSkeleton && !error && pagination && (
         <PaginationControls
           page={pagination.page}
           totalPages={pagination.totalPages}
           onPageChange={setPage}
         />
       )}
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+        title="Delete this job?"
+        description={`"${deleteTarget?.title ?? ""}" will be deleted. If it already has applications, it will be closed instead so applicants keep their history.`}
+        confirmLabel="Delete"
+        destructive
+        onConfirm={() =>
+          deleteTarget ? handleDelete(deleteTarget.id) : undefined
+        }
+      />
     </>
   );
 }

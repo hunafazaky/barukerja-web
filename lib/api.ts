@@ -112,22 +112,42 @@ export async function apiFetch<TResponse>(
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    const response = await fetch(`${API_BASE}${path}`, {
-      method,
-      headers,
-      // Same-origin now (see API_BASE above), so the browser would send
-      // this cookie by default anyway — "include" is kept explicit
-      // rather than relying on that default, since it costs nothing and
-      // protects against this code being copied somewhere cross-origin
-      // again later.
-      credentials: "include",
-      body: body !== undefined ? JSON.stringify(body) : undefined,
-    });
+    let response: Response;
+    try {
+      response = await fetch(`${API_BASE}${path}`, {
+        method,
+        headers,
+        // Same-origin now (see API_BASE above), so the browser would send
+        // this cookie by default anyway — "include" is kept explicit
+        // rather than relying on that default, since it costs nothing and
+        // protects against this code being copied somewhere cross-origin
+        // again later.
+        credentials: "include",
+        body: body !== undefined ? JSON.stringify(body) : undefined,
+      });
+    } catch {
+      // fetch() itself rejected: offline, DNS failure, connection reset...
+      throw new ApiError(
+        "Can't reach the server. Check your connection and try again.",
+        0,
+      );
+    }
 
-    // The backend always returns JSON, even for errors, so we can safely
-    // parse it. (If parsing fails, something is very wrong — e.g. the API
-    // is down — and we let that error bubble up naturally.)
-    const data = await response.json();
+    // The backend returns JSON for both successes and errors — but the
+    // hosting layer in front of it (Vercel/Render proxy, a cold-starting
+    // free-tier instance, a 502/504 page) can answer with HTML or plain
+    // text, and some successes have no body at all. So parse defensively
+    // instead of letting response.json() throw a SyntaxError that surfaces
+    // as "Unexpected token '<'" in the UI.
+    const text = await response.text();
+    let data: unknown = null;
+    if (text) {
+      try {
+        data = JSON.parse(text);
+      } catch {
+        data = null;
+      }
+    }
     return { response, data };
   }
 
@@ -136,7 +156,7 @@ export async function apiFetch<TResponse>(
   if (
     !response.ok &&
     accessToken &&
-    (data as ApiErrorResponse)?.code === "TOKEN_EXPIRED"
+    (data as ApiErrorResponse | null)?.code === "TOKEN_EXPIRED"
   ) {
     const newToken = await refreshAccessTokenOnce();
 
@@ -153,11 +173,14 @@ export async function apiFetch<TResponse>(
   }
 
   if (!response.ok) {
-    const errorData = data as ApiErrorResponse;
+    const errorData = data as Partial<ApiErrorResponse> | null;
     throw new ApiError(
-      errorData.message || "Something went wrong. Please try again.",
+      errorData?.message ||
+        (response.status >= 500
+          ? "The server had a problem. Please try again in a moment."
+          : "Something went wrong. Please try again."),
       response.status,
-      errorData.details,
+      errorData?.details,
     );
   }
 

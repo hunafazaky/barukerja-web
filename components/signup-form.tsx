@@ -15,7 +15,6 @@ import { Input } from "@/components/ui/input";
 // My Import
 import Link from "next/link";
 import { useState, FormEvent } from "react";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { ApiError } from "@/types/api";
 
@@ -24,7 +23,6 @@ export function SignupForm({
   ...props
 }: React.ComponentProps<"div">) {
   const { signup } = useAuth();
-  const router = useRouter();
 
   // Required fields.
   const [email, setEmail] = useState("");
@@ -59,7 +57,8 @@ export function SignupForm({
         // Only send display_name if the user actually typed one.
         ...(displayName.trim() ? { display_name: displayName.trim() } : {}),
       });
-      router.push("/jobs");
+      // Navigation to /jobs is handled by app/auth/signup/page.tsx once
+      // `user` is set.
     } catch (err) {
       if (err instanceof ApiError) {
         setErrorMessage(err.message);

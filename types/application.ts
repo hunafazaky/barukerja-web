@@ -26,7 +26,8 @@ export interface ApplicationApplicant {
 
 export interface Application {
   id: string;
-  job: ApplicationJob;
+  // null when the job no longer exists (see types/bookmark.ts).
+  job: ApplicationJob | null;
   applicant?: ApplicationApplicant;
   cv_key: string;
   cover_letter: string;

@@ -22,7 +22,7 @@ export function CompanyForm({
   existingCompany?: Company;
   onSuccess: (company: Company) => void;
 }) {
-  const { accessToken } = useAuth();
+  const { getAccessToken } = useAuth();
   const [name, setName] = useState(existingCompany?.name ?? "");
   const [description, setDescription] = useState(
     existingCompany?.description ?? "",
@@ -35,6 +35,7 @@ export function CompanyForm({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const accessToken = getAccessToken();
     if (!accessToken || !name.trim()) return;
 
     setIsSubmitting(true);
@@ -49,11 +50,15 @@ export function CompanyForm({
         logoUrl = result.url;
       }
 
+      // When editing, an emptied field must be sent as "" — the API's PATCH
+      // accepts "" to clear these, but a missing key means "leave as is", so
+      // `|| undefined` silently kept the old value. (Creating: omit empties.)
+      const blank = existingCompany ? "" : undefined;
       const input = {
         name: name.trim(),
-        description: description.trim() || undefined,
-        website: website.trim() || undefined,
-        location: location.trim() || undefined,
+        description: description.trim() || blank,
+        website: website.trim() || blank,
+        location: location.trim() || blank,
         logo: logoUrl,
       };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ApplyForm } from "@/components/apply-form";
@@ -9,9 +9,10 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/context/AuthContext";
+import { InlineError } from "@/components/inline-error";
+import { useApiQuery } from "@/hooks/use-api-query";
 import { useBookmark } from "@/hooks/use-bookmark";
 import { getJobById } from "@/lib/job.api";
-import { ApiError } from "@/types/api";
 import { Job } from "@/types/job";
 
 const WORK_MODE_LABELS: Record<Job["work_mode"], string> = {
@@ -39,49 +40,39 @@ function formatSalary(job: Job): string | null {
   return `Up to ${currency}${format(job.salary_max as number)}`;
 }
 
+// A job only accepts applications while it is "open" AND its deadline (if
+// any) hasn't passed. The jobs list already hides expired jobs, but the
+// detail page is reachable by direct link (history, bookmarks, shared URLs),
+// and the backend rejects an application to a draft/closed/expired job —
+// after the seeker has already uploaded their CV. Say so up front instead.
+function getApplyState(job: Job): "open" | "draft" | "closed" | "expired" {
+  if (job.status === "draft") return "draft";
+  if (job.status !== "open") return "closed";
+  if (job.deadline && new Date(job.deadline).getTime() < Date.now()) {
+    return "expired";
+  }
+  return "open";
+}
+
 export default function JobDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const { user, accessToken, isLoading: authLoading } = useAuth();
+  const { user } = useAuth();
 
-  const [job, setJob] = useState<Job | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // "optional" auth: GET /jobs/:id behaves slightly differently signed in
+  // vs. out (it records viewing history when signed in), so the query waits
+  // for the session check and fires once. A silent token refresh no longer
+  // re-fetches the page (which used to unmount an open apply form).
+  const {
+    data: job,
+    isLoading,
+    error,
+  } = useApiQuery(`job:${id}`, (token) => getJobById(id, token), {
+    auth: "optional",
+    errorMessage: "Failed to load this job. Please try again.",
+  });
 
   const bookmark = useBookmark(id);
-
-  useEffect(() => {
-    // Wait for auth to settle first — GET /jobs/:id behaves slightly
-    // differently signed in vs. out (it records viewing history when
-    // signed in), so there's no harm in waiting, and it avoids firing
-    // the request twice (once anonymous, once with a token a beat later).
-    if (authLoading) return;
-
-    let cancelled = false;
-    setIsLoading(true);
-    setError(null);
-
-    getJobById(id, accessToken)
-      .then((result) => {
-        if (!cancelled) setJob(result);
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(
-            err instanceof ApiError
-              ? err.message
-              : "Failed to load this job. Please try again.",
-          );
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [id, accessToken, authLoading]);
 
   return (
     <>
@@ -102,15 +93,7 @@ export default function JobDetailPage() {
       )}
 
       {!isLoading && error && (
-        <div
-          className="mt-6 rounded-md border px-4 py-6 text-sm"
-          style={{
-            borderColor: "var(--color-danger)",
-            color: "var(--color-danger)",
-          }}
-        >
-          {error}
-        </div>
+        <InlineError className="mt-6 py-6">{error}</InlineError>
       )}
 
       {!isLoading && !error && job && (
@@ -154,12 +137,17 @@ export default function JobDetailPage() {
             )}
           </div>
 
+          {bookmark.error && (
+            <InlineError className="mt-3">{bookmark.error}</InlineError>
+          )}
+
           <div className="mt-4 flex flex-wrap gap-2">
             <Badge variant="outline">{WORK_MODE_LABELS[job.work_mode]}</Badge>
             <Badge variant="outline">{JOB_TYPE_LABELS[job.job_type]}</Badge>
             {job.experience_level && (
               <Badge variant="outline">{job.experience_level}</Badge>
             )}
+            {job.status === "draft" && <Badge variant="outline">Draft</Badge>}
             {job.status === "closed" && (
               <Badge
                 style={{
@@ -206,7 +194,7 @@ export default function JobDetailPage() {
 
           <ApplyCta
             jobId={job.id}
-            jobStatus={job.status}
+            applyState={getApplyState(job)}
             userRole={user?.role ?? null}
             isEmployerViewingOwnJob={
               !!user && user.role === "employer" && job.posted_by.id === user.id
@@ -228,13 +216,13 @@ export default function JobDetailPage() {
 // rather than this page trying to pre-detect it.
 function ApplyCta({
   jobId,
-  jobStatus,
+  applyState,
   userRole,
   isEmployerViewingOwnJob,
   onSignInRequired,
 }: {
   jobId: string;
-  jobStatus: Job["status"];
+  applyState: ReturnType<typeof getApplyState>;
   userRole: "seeker" | "employer" | "admin" | null;
   isEmployerViewingOwnJob: boolean;
   onSignInRequired: () => void;
@@ -257,8 +245,24 @@ function ApplyCta({
     );
   }
 
-  if (jobStatus === "closed") {
-    return <Button disabled>Applications closed</Button>;
+  if (applyState !== "open") {
+    const reason =
+      applyState === "draft"
+        ? "This job isn't published yet"
+        : applyState === "expired"
+          ? "The application deadline has passed"
+          : "Applications closed";
+    return (
+      <div>
+        <Button disabled>Applications closed</Button>
+        <p
+          className="mt-2 text-sm"
+          style={{ color: "var(--color-text-muted)" }}
+        >
+          {reason}.
+        </p>
+      </div>
+    );
   }
 
   if (userRole === null) {

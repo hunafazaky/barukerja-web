@@ -16,7 +16,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { createJob, updateJob } from "@/lib/job.api";
 import { ApiError } from "@/types/api";
-import { Job, JobStatus, JobType, WorkMode } from "@/types/job";
+import { Job, JobFormInput, JobStatus, JobType, WorkMode } from "@/types/job";
 
 const WORK_MODE_LABELS: Record<WorkMode, string> = {
   onsite: "On-site",
@@ -38,11 +38,32 @@ const STATUS_LABELS: Record<JobStatus, string> = {
   closed: "Closed",
 };
 
-// today's date as "YYYY-MM-DD", for the deadline input's min attribute —
-// the backend rejects a deadline that isn't in the future.
-function todayIsoDate(): string {
-  return new Date().toISOString().slice(0, 10);
+// Tomorrow's date (in the user's own timezone) as "YYYY-MM-DD", for the
+// deadline input's `min`. The backend requires a deadline strictly in the
+// future (`Joi.date().greater('now')`) and a date-only value is read as
+// midnight UTC, so "today" is always rejected — the picker must not offer it.
+function tomorrowIsoDate(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
+
+// express.json({ limit: "10kb" }) on the backend rejects bigger bodies with
+// a bare "request entity too large". Stay a little under it and say so.
+const MAX_BODY_BYTES = 9_500;
+
+// Fields the backend's PATCH schema cannot clear once set (no `null`, and
+// `""` fails validation for these). Documented in
+// docs/BACKEND-SUGGESTIONS.md. Until that's fixed we say so instead of
+// silently keeping the old value.
+const NON_CLEARABLE: Record<string, string> = {
+  experience_level: "Experience level",
+  salary_min: "Min salary",
+  salary_max: "Max salary",
+  currency: "Currency",
+  deadline: "Application deadline",
+};
 
 export function JobForm({
   existingJob,
@@ -51,42 +72,44 @@ export function JobForm({
   existingJob?: Job;
   onSuccess: (jobId: string) => void;
 }) {
-  const { accessToken } = useAuth();
-  const [title, setTitle] = useState(existingJob?.title ?? "");
-  const [description, setDescription] = useState(
-    existingJob?.description ?? "",
-  );
-  const [location, setLocation] = useState(existingJob?.location ?? "");
-  const [workMode, setWorkMode] = useState<WorkMode>(
-    existingJob?.work_mode ?? "onsite",
-  );
-  const [jobType, setJobType] = useState<JobType>(
-    existingJob?.job_type ?? "full_time",
-  );
+  const { getAccessToken } = useAuth();
+  // The values the form started with — edits are sent as a diff against
+  // these, so untouched fields (notably an already-passed deadline, which
+  // the backend would reject) are never re-sent.
+  const [initial] = useState(() => ({
+    title: existingJob?.title ?? "",
+    description: existingJob?.description ?? "",
+    location: existingJob?.location ?? "",
+    workMode: existingJob?.work_mode ?? "onsite",
+    jobType: existingJob?.job_type ?? "full_time",
+    experienceLevel: existingJob?.experience_level ?? "",
+    salaryMin: existingJob?.salary_min?.toString() ?? "",
+    salaryMax: existingJob?.salary_max?.toString() ?? "",
+    currency: existingJob?.currency ?? "IDR",
+    categories: existingJob?.categories ?? [],
+    deadline: existingJob?.deadline ? existingJob.deadline.slice(0, 10) : "",
+    status: existingJob?.status ?? "open",
+  }));
+  const [title, setTitle] = useState(initial.title);
+  const [description, setDescription] = useState(initial.description);
+  const [location, setLocation] = useState(initial.location);
+  const [workMode, setWorkMode] = useState<WorkMode>(initial.workMode);
+  const [jobType, setJobType] = useState<JobType>(initial.jobType);
   const [experienceLevel, setExperienceLevel] = useState(
-    existingJob?.experience_level ?? "",
+    initial.experienceLevel,
   );
-  const [salaryMin, setSalaryMin] = useState(
-    existingJob?.salary_min?.toString() ?? "",
-  );
-  const [salaryMax, setSalaryMax] = useState(
-    existingJob?.salary_max?.toString() ?? "",
-  );
-  const [currency, setCurrency] = useState(existingJob?.currency ?? "IDR");
-  const [categories, setCategories] = useState<string[]>(
-    existingJob?.categories ?? [],
-  );
-  const [deadline, setDeadline] = useState(
-    existingJob?.deadline ? existingJob.deadline.slice(0, 10) : "",
-  );
-  const [status, setStatus] = useState<JobStatus>(
-    existingJob?.status ?? "open",
-  );
+  const [salaryMin, setSalaryMin] = useState(initial.salaryMin);
+  const [salaryMax, setSalaryMax] = useState(initial.salaryMax);
+  const [currency, setCurrency] = useState(initial.currency);
+  const [categories, setCategories] = useState<string[]>(initial.categories);
+  const [deadline, setDeadline] = useState(initial.deadline);
+  const [status, setStatus] = useState<JobStatus>(initial.status);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const accessToken = getAccessToken();
     if (!accessToken || !title.trim() || !description.trim()) return;
 
     if (salaryMin && salaryMax && Number(salaryMax) <= Number(salaryMin)) {
@@ -94,28 +117,105 @@ export function JobForm({
       return;
     }
 
-    setIsSubmitting(true);
-    setError(null);
+    // What the user has now, normalised the way the API wants it.
+    const current = {
+      title: title.trim(),
+      description: description.trim(),
+      location: location.trim(),
+      work_mode: workMode,
+      job_type: jobType,
+      experience_level: experienceLevel.trim(),
+      salary_min: salaryMin,
+      salary_max: salaryMax,
+      currency: currency.trim().toUpperCase(),
+      categories,
+      deadline,
+      status,
+    };
 
-    try {
-      const input = {
-        title: title.trim(),
-        description: description.trim(),
-        location: location.trim() || undefined,
-        work_mode: workMode,
-        job_type: jobType,
-        experience_level: experienceLevel.trim() || undefined,
+    let input: Partial<JobFormInput>;
+
+    if (!existingJob) {
+      input = {
+        title: current.title,
+        description: current.description,
+        location: current.location || undefined,
+        work_mode: current.work_mode,
+        job_type: current.job_type,
+        experience_level: current.experience_level || undefined,
         salary_min: salaryMin ? Number(salaryMin) : undefined,
         salary_max: salaryMax ? Number(salaryMax) : undefined,
-        currency: currency.trim() ? currency.trim().toUpperCase() : undefined,
+        currency: current.currency || undefined,
         categories,
         deadline: deadline || undefined,
         status,
       };
+    } else {
+      // Edit: send only what changed.
+      const before = {
+        title: initial.title.trim(),
+        description: initial.description.trim(),
+        location: initial.location.trim(),
+        work_mode: initial.workMode,
+        job_type: initial.jobType,
+        experience_level: initial.experienceLevel.trim(),
+        salary_min: initial.salaryMin,
+        salary_max: initial.salaryMax,
+        currency: initial.currency.trim().toUpperCase(),
+        categories: initial.categories,
+        deadline: initial.deadline,
+        status: initial.status,
+      };
+      const changed = (key: keyof typeof current) =>
+        JSON.stringify(current[key]) !== JSON.stringify(before[key]);
 
+      for (const [key, label] of Object.entries(NON_CLEARABLE)) {
+        const k = key as keyof typeof current;
+        if (changed(k) && !current[k] && before[k]) {
+          setError(
+            `${label} can't be removed once it's set. Enter a new value instead.`,
+          );
+          return;
+        }
+      }
+
+      input = {};
+      if (changed("title")) input.title = current.title;
+      if (changed("description")) input.description = current.description;
+      // "" is how the API clears a location.
+      if (changed("location")) input.location = current.location;
+      if (changed("work_mode")) input.work_mode = current.work_mode;
+      if (changed("job_type")) input.job_type = current.job_type;
+      if (changed("experience_level"))
+        input.experience_level = current.experience_level;
+      if (changed("salary_min")) input.salary_min = Number(salaryMin);
+      if (changed("salary_max")) input.salary_max = Number(salaryMax);
+      if (changed("currency")) input.currency = current.currency;
+      if (changed("categories")) input.categories = categories;
+      if (changed("deadline")) input.deadline = deadline;
+      if (changed("status")) input.status = status;
+
+      if (Object.keys(input).length === 0) {
+        // Nothing to save (the API rejects an empty PATCH) — just leave.
+        onSuccess(existingJob.id);
+        return;
+      }
+    }
+
+    if (new Blob([JSON.stringify(input)]).size > MAX_BODY_BYTES) {
+      setError(
+        "This job is too long to save. Shorten the description (the limit is roughly 9,000 characters).",
+      );
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
       const result = existingJob
         ? await updateJob(existingJob.id, input, accessToken)
-        : await createJob(input, accessToken);
+        : await createJob(input as JobFormInput, accessToken);
 
       onSuccess(result.job.id);
     } catch (err) {
@@ -156,6 +256,7 @@ export function JobForm({
         <Field>
           <FieldLabel htmlFor="job-work-mode">Work mode</FieldLabel>
           <Select
+            items={WORK_MODE_LABELS}
             value={workMode}
             onValueChange={(v) => setWorkMode(v as WorkMode)}
           >
@@ -175,6 +276,7 @@ export function JobForm({
         <Field>
           <FieldLabel htmlFor="job-type">Job type</FieldLabel>
           <Select
+            items={JOB_TYPE_LABELS}
             value={jobType}
             onValueChange={(v) => setJobType(v as JobType)}
           >
@@ -250,7 +352,11 @@ export function JobForm({
 
       <Field>
         <FieldLabel htmlFor="job-categories">Categories</FieldLabel>
-        <CategoriesInput value={categories} onChange={setCategories} />
+        <CategoriesInput
+          id="job-categories"
+          value={categories}
+          onChange={setCategories}
+        />
       </Field>
 
       <Field>
@@ -261,7 +367,11 @@ export function JobForm({
         <Input
           id="job-deadline"
           type="date"
-          min={todayIsoDate()}
+          min={
+            deadline === initial.deadline && existingJob
+              ? undefined
+              : tomorrowIsoDate()
+          }
           value={deadline}
           onChange={(e) => setDeadline(e.target.value)}
         />
@@ -269,7 +379,11 @@ export function JobForm({
 
       <Field>
         <FieldLabel htmlFor="job-status">Status</FieldLabel>
-        <Select value={status} onValueChange={(v) => setStatus(v as JobStatus)}>
+        <Select
+          items={STATUS_LABELS}
+          value={status}
+          onValueChange={(v) => setStatus(v as JobStatus)}
+        >
           <SelectTrigger id="job-status" className="w-full">
             <SelectValue />
           </SelectTrigger>

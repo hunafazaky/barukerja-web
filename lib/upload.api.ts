@@ -31,16 +31,36 @@ export async function uploadFile(
   formData.append("file", file);
   formData.append("kind", kind);
 
-  const response = await fetch("/api/upload", {
-    method: "POST",
-    body: formData,
-  });
+  let response: Response;
+  try {
+    response = await fetch("/api/upload", {
+      method: "POST",
+      body: formData,
+    });
+  } catch {
+    throw new ApiError(
+      "Can't reach the server. Check your connection and try again.",
+      0,
+    );
+  }
 
-  const data = await response.json();
+  // Not every failure comes from our route handler: a hosting-level
+  // rejection (e.g. 413 "payload too large" on serverless platforms) is
+  // plain text/HTML, so parse defensively instead of crashing on
+  // response.json().
+  let data: { message?: string } & UploadResult = {};
+  try {
+    data = await response.json();
+  } catch {
+    data = {};
+  }
 
   if (!response.ok) {
     throw new ApiError(
-      data.message || "Upload failed. Please try again.",
+      data.message ||
+        (response.status === 413
+          ? "That file is too large to upload. Try a smaller one."
+          : "Upload failed. Please try again."),
       response.status,
     );
   }

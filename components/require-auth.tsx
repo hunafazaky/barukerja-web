@@ -17,13 +17,16 @@ export function RequireAuth({
   role?: UserRole;
   children: React.ReactNode;
 }) {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, isSigningOut } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
     if (isLoading) return;
     if (!user) {
+      // The user just chose "Sign out": signout() is already sending them
+      // to /auth/signin, so don't add a competing redirect with a ?next=.
+      if (isSigningOut()) return;
       router.replace(`/auth/signin?next=${encodeURIComponent(pathname)}`);
       return;
     }
@@ -33,7 +36,7 @@ export function RequireAuth({
       // valid landing spot rather than guessing at a role-appropriate one.
       router.replace("/jobs");
     }
-  }, [user, isLoading, role, router, pathname]);
+  }, [user, isLoading, role, router, pathname, isSigningOut]);
 
   if (isLoading || !user || (role && user.role !== role)) {
     return <SiteLoader />;

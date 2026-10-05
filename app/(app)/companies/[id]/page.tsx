@@ -1,49 +1,27 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense } from "react";
 import { useParams } from "next/navigation";
+import { InlineError } from "@/components/inline-error";
 import { JobListSection } from "@/components/job-list";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getCompanyById } from "@/lib/company.api";
+import { useApiQuery } from "@/hooks/use-api-query";
 import { useJobs } from "@/hooks/use-jobs";
-import { usePageParam } from "@/hooks/use-page-param";
-import { ApiError } from "@/types/api";
-import { Company } from "@/types/company";
+import { useClampPage, usePageParam } from "@/hooks/use-page-param";
 
 function CompanyProfileContent() {
   const { id } = useParams<{ id: string }>();
   const [page, setPage] = usePageParam();
-  const [company, setCompany] = useState<Company | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: company,
+    isLoading,
+    error,
+  } = useApiQuery(`company:${id}`, () => getCompanyById(id), {
+    errorMessage: "Failed to load this company. Please try again.",
+  });
   const jobsData = useJobs({ company: id, page, sort: "newest" });
-
-  useEffect(() => {
-    let cancelled = false;
-    setIsLoading(true);
-    setError(null);
-
-    getCompanyById(id)
-      .then((result) => {
-        if (!cancelled) setCompany(result);
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(
-            err instanceof ApiError
-              ? err.message
-              : "Failed to load this company. Please try again.",
-          );
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [id]);
+  useClampPage(page, jobsData.pagination, setPage);
 
   return (
     <>
@@ -55,15 +33,7 @@ function CompanyProfileContent() {
       )}
 
       {!isLoading && error && (
-        <div
-          className="rounded-md border px-4 py-6 text-sm"
-          style={{
-            borderColor: "var(--color-danger)",
-            color: "var(--color-danger)",
-          }}
-        >
-          {error}
-        </div>
+        <InlineError className="py-6">{error}</InlineError>
       )}
 
       {!isLoading && !error && company && (

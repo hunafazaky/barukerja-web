@@ -9,9 +9,11 @@ import { Badge } from "@/components/ui/badge";
 // resurrected fixed-option select like the old reading-platform genre
 // list (deleted; see CLAUDE.md's Open items history).
 export function CategoriesInput({
+  id,
   value,
   onChange,
 }: {
+  id?: string;
   value: string[];
   onChange: (categories: string[]) => void;
 }) {
@@ -43,6 +45,7 @@ export function CategoriesInput({
   return (
     <div className="space-y-2">
       <Input
+        id={id}
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
         onKeyDown={handleKeyDown}

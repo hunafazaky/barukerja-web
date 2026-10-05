@@ -43,7 +43,12 @@ export function FileUploadField({
   // whenever the file changes or this component unmounts, so it doesn't
   // leak memory.
   useEffect(() => {
+    // This effect owns a browser resource (an object URL) and mirrors it into
+    // state so it can be revoked on cleanup — a legitimate "synchronise with
+    // an external system" effect, which the rule can't tell from a data
+    // fetch.
     if (!file || !isImage) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPreviewUrl(null);
       return;
     }
@@ -100,6 +105,7 @@ export function FileUploadField({
 
       {isImage && imageSrc && (
         // blob: preview URLs aren't supported by next/image.
+        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={imageSrc}
           alt="Preview"

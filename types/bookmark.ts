@@ -6,6 +6,8 @@ import { JobSummary } from "@/types/job";
 // this list is bookmarked.
 export interface Bookmark {
   id: string;
-  job: JobSummary;
+  // null when the job no longer exists (e.g. its employer deleted their
+  // account) — Mongoose populates a dangling reference as null.
+  job: JobSummary | null;
   createdAt: string;
 }

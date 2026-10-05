@@ -2,7 +2,9 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
+  useRef,
   useState,
   useEffect,
   ReactNode,
@@ -29,6 +31,16 @@ interface AuthContextValue {
   // token (e.g. via an XSS bug) could be reused. A fresh one is fetched
   // automatically via the refresh cookie (see the useEffect below).
   accessToken: string | null;
+  // Always returns the LATEST token, without subscribing to changes. Data
+  // fetching hooks use this instead of depending on `accessToken`: the token
+  // is silently replaced every ~15 minutes, and a hook that lists it as a
+  // dependency would re-fetch (and flash its loading state / unmount a form
+  // the user is typing into) every time that happens.
+  getAccessToken: () => string | null;
+  // True for a moment right after the user chooses "Sign out", so
+  // <RequireAuth> doesn't also redirect to /auth/signin?next=<this page>
+  // (which would fight signout()'s own redirect and leave a stale ?next=).
+  isSigningOut: () => boolean;
   // True while we're checking if there's an existing session (on first load).
   isLoading: boolean;
   signin: (email: string, password: string) => Promise<void>;
@@ -75,6 +87,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
+  // The ref is updated synchronously (before React re-renders), so a request
+  // started right after a silent refresh already sees the new token.
+  const accessTokenRef = useRef<string | null>(null);
+  const signingOutRef = useRef(false);
+
+  const applyAccessToken = useCallback((token: string | null) => {
+    accessTokenRef.current = token;
+    setAccessToken(token);
+  }, []);
+  const getAccessToken = useCallback(() => accessTokenRef.current, []);
+  const isSigningOut = useCallback(() => signingOutRef.current, []);
+
   // ==================================================
   // Let lib/api.ts's apiFetch() reach back into this context.
   //
@@ -89,17 +113,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     registerAuthRefreshHandlers({
       onTokenRefreshed: (newToken) => {
-        setAccessToken(newToken);
+        applyAccessToken(newToken);
       },
       onRefreshFailed: () => {
         // The refresh cookie itself is gone or expired too — there's no
         // session left to recover, so reflect that honestly rather than
         // silently pretending everything's fine.
-        setAccessToken(null);
+        applyAccessToken(null);
         setUser(null);
       },
     });
-  }, []);
+  }, [applyAccessToken]);
 
   // ==================================================
   // On first load, try to silently restore the session.
@@ -123,12 +147,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 "could not load the matching user profile.",
             );
           }
-          setAccessToken(null);
+          applyAccessToken(null);
           setUser(null);
           return;
         }
 
-        setAccessToken(data.accessToken);
+        applyAccessToken(data.accessToken);
         setUser(restoredUser);
       } catch (err) {
         // No valid refresh cookie (or it expired) — that's the *expected*
@@ -145,7 +169,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             err,
           );
         }
-        setAccessToken(null);
+        applyAccessToken(null);
         setUser(null);
       } finally {
         setIsLoading(false);
@@ -153,7 +177,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     restoreSession();
-  }, []);
+  }, [applyAccessToken]);
 
   // ==================================================
   // Sign in: call the API for a token, then load the full profile.
@@ -168,7 +192,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       );
     }
 
-    setAccessToken(data.accessToken);
+    signingOutRef.current = false;
+    applyAccessToken(data.accessToken);
     setUser(signedInUser);
   }
 
@@ -192,7 +217,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       );
     }
 
-    setAccessToken(data.accessToken);
+    signingOutRef.current = false;
+    applyAccessToken(data.accessToken);
     setUser(newUser);
   }
 
@@ -202,6 +228,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // UI always ends up in a signed-out state.
   // ==================================================
   async function signout() {
+    signingOutRef.current = true;
     try {
       await apiSignout();
     } catch (err) {
@@ -211,15 +238,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error("Signout request failed:", err.message);
       }
     } finally {
-      setAccessToken(null);
+      applyAccessToken(null);
       setUser(null);
       router.replace("/auth/signin");
+      // Long enough for the guard effects of the page we're leaving to run
+      // and see the flag; short enough not to affect later navigation.
+      setTimeout(() => {
+        signingOutRef.current = false;
+      }, 1000);
     }
   }
 
   return (
     <AuthContext.Provider
-      value={{ user, accessToken, isLoading, signin, signup, signout }}
+      value={{
+        user,
+        accessToken,
+        getAccessToken,
+        isSigningOut,
+        isLoading,
+        signin,
+        signup,
+        signout,
+      }}
     >
       {children}
     </AuthContext.Provider>

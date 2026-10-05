@@ -15,7 +15,6 @@ import { Input } from "@/components/ui/input";
 // My Import
 import Link from "next/link";
 import { useState, FormEvent } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { ApiError } from "@/types/api";
 
@@ -24,8 +23,6 @@ export function SigninForm({
   ...props
 }: React.ComponentProps<"div">) {
   const { signin } = useAuth();
-  const router = useRouter();
-  const searchParams = useSearchParams();
 
   // Form field state.
   const [email, setEmail] = useState("");
@@ -42,11 +39,8 @@ export function SigninForm({
 
     try {
       await signin(email, password);
-      // Signed in successfully — send the user to the home page.
-      const next = searchParams.get("next");
-      // Only ever redirect to a same-site relative path — never follow
-      // an absolute URL from the query string, to avoid an open redirect.
-      router.push(next && next.startsWith("/") ? next : "/jobs");
+      // Signed in. Navigation is handled by app/auth/signin/page.tsx, which
+      // redirects (to a validated ?next=, or /jobs) as soon as `user` is set.
     } catch (err) {
       // ApiError messages come straight from the backend
       // (e.g. "Email or password is incorrect.", or a 429 rate-limit message).

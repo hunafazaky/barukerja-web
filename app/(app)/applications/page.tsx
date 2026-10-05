@@ -2,6 +2,9 @@
 
 import { Suspense, useState } from "react";
 import Link from "next/link";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import { DeletedJobNotice } from "@/components/deleted-job-notice";
+import { InlineError } from "@/components/inline-error";
 import { PageHeader } from "@/components/page-header";
 import { RequireAuth } from "@/components/require-auth";
 import { PaginationControls } from "@/components/pagination-controls";
@@ -10,12 +13,14 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/context/AuthContext";
 import { useApplications } from "@/hooks/use-applications";
-import { usePageParam } from "@/hooks/use-page-param";
+import { useClampPage, usePageParam } from "@/hooks/use-page-param";
+import { openUrlInNewTab } from "@/lib/open-url";
+import { ApiError } from "@/types/api";
 import {
   getApplicationCvUrl,
   withdrawApplication,
 } from "@/lib/application.api";
-import { ApplicationStatus } from "@/types/application";
+import { Application, ApplicationStatus } from "@/types/application";
 
 const STATUS_LABELS: Record<ApplicationStatus, string> = {
   applied: "Applied",
@@ -42,30 +47,53 @@ function statusStyle(status: ApplicationStatus) {
 }
 
 function ApplicationsPageContent() {
-  const { accessToken } = useAuth();
+  const { getAccessToken } = useAuth();
   const [page, setPage] = usePageParam();
   const { applications, pagination, isLoading, error, refetch } =
     useApplications(page);
-  const [withdrawingId, setWithdrawingId] = useState<string | null>(null);
+  const [withdrawTarget, setWithdrawTarget] = useState<Application | null>(
+    null,
+  );
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  // After the last item on the last page is withdrawn, step back a page
+  // instead of showing "You haven't applied to any jobs yet".
+  useClampPage(page, pagination, setPage);
+  const showSkeleton =
+    isLoading || (!!pagination && page > Math.max(pagination.totalPages, 1));
 
   async function handleWithdraw(id: string) {
-    if (!accessToken) return;
-    setWithdrawingId(id);
+    const token = getAccessToken();
+    if (!token) return;
+    setActionError(null);
     try {
-      await withdrawApplication(id, accessToken);
+      await withdrawApplication(id, token);
       refetch();
-    } finally {
-      setWithdrawingId(null);
+    } catch (err) {
+      setActionError(
+        err instanceof ApiError
+          ? err.message
+          : "Couldn't withdraw this application. Please try again.",
+      );
     }
   }
 
   async function handleDownloadCv(id: string) {
-    if (!accessToken) return;
+    const token = getAccessToken();
+    if (!token) return;
     setDownloadingId(id);
+    setActionError(null);
     try {
-      const { url } = await getApplicationCvUrl(id, accessToken);
-      window.open(url, "_blank", "noopener,noreferrer");
+      await openUrlInNewTab(
+        async () => (await getApplicationCvUrl(id, token)).url,
+      );
+    } catch (err) {
+      setActionError(
+        err instanceof ApiError
+          ? err.message
+          : "Couldn't open this CV. Please try again.",
+      );
     } finally {
       setDownloadingId(null);
     }
@@ -74,24 +102,18 @@ function ApplicationsPageContent() {
   return (
     <>
       <PageHeader title="My applications" />
-      {isLoading &&
+      {actionError && <InlineError className="mb-4">{actionError}</InlineError>}
+
+      {showSkeleton &&
         Array.from({ length: 3 }).map((_, i) => (
           <Skeleton key={i} className="mb-3 h-20 w-full" />
         ))}
 
-      {!isLoading && error && (
-        <div
-          className="rounded-md border px-4 py-6 text-sm"
-          style={{
-            borderColor: "var(--color-danger)",
-            color: "var(--color-danger)",
-          }}
-        >
-          {error}
-        </div>
+      {!showSkeleton && error && (
+        <InlineError className="py-6">{error}</InlineError>
       )}
 
-      {!isLoading && !error && applications.length === 0 && (
+      {!showSkeleton && !error && applications.length === 0 && (
         <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
           You haven&apos;t applied to any jobs yet.{" "}
           <Link href="/jobs" className="underline">
@@ -102,29 +124,36 @@ function ApplicationsPageContent() {
       )}
 
       <div className="divide-y" style={{ borderColor: "var(--color-border)" }}>
-        {!isLoading &&
+        {!showSkeleton &&
           !error &&
           applications.map((application, i) => (
             <div
               key={application.id}
+              data-testid={`application-${application.id}`}
               className={`py-4 ${i === 0 ? "" : "border-t"}`}
               style={{ borderColor: "var(--color-border)" }}
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <Link
-                    href={`/jobs/${application.job.id}`}
-                    className="font-bold hover:underline"
-                    style={{ fontFamily: "var(--font-heading)" }}
-                  >
-                    {application.job.title}
-                  </Link>
-                  <p
-                    className="text-sm"
-                    style={{ color: "var(--color-text-muted)" }}
-                  >
-                    {application.job.company.name}
-                  </p>
+                  {application.job ? (
+                    <>
+                      <Link
+                        href={`/jobs/${application.job.id}`}
+                        className="font-bold hover:underline"
+                        style={{ fontFamily: "var(--font-heading)" }}
+                      >
+                        {application.job.title}
+                      </Link>
+                      <p
+                        className="text-sm"
+                        style={{ color: "var(--color-text-muted)" }}
+                      >
+                        {application.job.company.name}
+                      </p>
+                    </>
+                  ) : (
+                    <DeletedJobNotice />
+                  )}
                 </div>
                 <Badge
                   variant="outline"
@@ -147,8 +176,7 @@ function ApplicationsPageContent() {
                   <Button
                     variant="outline"
                     size="sm"
-                    disabled={withdrawingId === application.id}
-                    onClick={() => handleWithdraw(application.id)}
+                    onClick={() => setWithdrawTarget(application)}
                     style={{ color: "var(--color-danger)" }}
                   >
                     Withdraw
@@ -159,13 +187,31 @@ function ApplicationsPageContent() {
           ))}
       </div>
 
-      {!isLoading && !error && pagination && (
+      {!showSkeleton && !error && pagination && (
         <PaginationControls
           page={pagination.page}
           totalPages={pagination.totalPages}
           onPageChange={setPage}
         />
       )}
+
+      <ConfirmDialog
+        open={withdrawTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setWithdrawTarget(null);
+        }}
+        title="Withdraw application?"
+        description={
+          withdrawTarget?.job
+            ? `Your application to "${withdrawTarget.job.title}" will be removed. You can apply again later if the job is still open.`
+            : "Your application will be removed."
+        }
+        confirmLabel="Withdraw"
+        destructive
+        onConfirm={() =>
+          withdrawTarget ? handleWithdraw(withdrawTarget.id) : undefined
+        }
+      />
     </>
   );
 }

@@ -4,7 +4,7 @@ import { Suspense, useState } from "react";
 import { PageHeader } from "@/components/page-header";
 import { JobListSection } from "@/components/job-list";
 import { useJobs } from "@/hooks/use-jobs";
-import { usePageParam } from "@/hooks/use-page-param";
+import { useClampPage, usePageParam } from "@/hooks/use-page-param";
 import { Input } from "@/components/ui/input";
 
 // Public — no sign-in required to browse. Signing in just adds
@@ -13,6 +13,7 @@ function JobsPageContent() {
   const [page, setPage] = usePageParam();
   const [q, setQ] = useState("");
   const jobsData = useJobs({ page, q: q || undefined, sort: "newest" });
+  useClampPage(page, jobsData.pagination, setPage);
 
   return (
     <>
@@ -26,7 +27,9 @@ function JobsPageContent() {
         value={q}
         onChange={(e) => {
           setQ(e.target.value);
-          setPage(1);
+          // replace, not push: resetting to page 1 while typing is a
+          // correction, not a navigation worth a Back-button stop.
+          if (page !== 1) setPage(1, { replace: true });
         }}
         className="mb-8 max-w-sm"
       />

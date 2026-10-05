@@ -2,6 +2,8 @@
 
 import { Suspense, useState } from "react";
 import { useParams } from "next/navigation";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import { InlineError } from "@/components/inline-error";
 import { PageHeader } from "@/components/page-header";
 import { RequireAuth } from "@/components/require-auth";
 import { PaginationControls } from "@/components/pagination-controls";
@@ -10,7 +12,9 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/context/AuthContext";
 import { useJobApplicants } from "@/hooks/use-job-applicants";
-import { usePageParam } from "@/hooks/use-page-param";
+import { useClampPage, usePageParam } from "@/hooks/use-page-param";
+import { openUrlInNewTab } from "@/lib/open-url";
+import { ApiError } from "@/types/api";
 import {
   getApplicationCvUrl,
   updateApplicationStatus,
@@ -18,6 +22,7 @@ import {
 import {
   ALLOWED_STATUS_TRANSITIONS,
   ApplicationStatus,
+  JobApplicant,
 } from "@/types/application";
 
 const STATUS_LABELS: Record<ApplicationStatus, string> = {
@@ -46,29 +51,54 @@ function statusStyle(status: ApplicationStatus) {
 
 function ApplicantsPageContent() {
   const { id: jobId } = useParams<{ id: string }>();
-  const { accessToken } = useAuth();
+  const { getAccessToken } = useAuth();
   const [page, setPage] = usePageParam();
   const { applicants, pagination, isLoading, error, refetch } =
     useJobApplicants(jobId, page);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  // Rejecting is final (rejected has no allowed next status), so it asks
+  // first; the other transitions are one click.
+  const [rejectTarget, setRejectTarget] = useState<JobApplicant | null>(null);
+
+  useClampPage(page, pagination, setPage);
+  const showSkeleton =
+    isLoading || (!!pagination && page > Math.max(pagination.totalPages, 1));
 
   async function handleStatusChange(id: string, status: ApplicationStatus) {
-    if (!accessToken) return;
+    const token = getAccessToken();
+    if (!token) return;
     setBusyId(id);
+    setActionError(null);
     try {
-      await updateApplicationStatus(id, status, accessToken);
+      await updateApplicationStatus(id, status, token);
       refetch();
+    } catch (err) {
+      setActionError(
+        err instanceof ApiError
+          ? err.message
+          : "Couldn't update this application. Please try again.",
+      );
     } finally {
       setBusyId(null);
     }
   }
 
   async function handleViewCv(id: string) {
-    if (!accessToken) return;
+    const token = getAccessToken();
+    if (!token) return;
     setBusyId(id);
+    setActionError(null);
     try {
-      const { url } = await getApplicationCvUrl(id, accessToken);
-      window.open(url, "_blank", "noopener,noreferrer");
+      await openUrlInNewTab(
+        async () => (await getApplicationCvUrl(id, token)).url,
+      );
+    } catch (err) {
+      setActionError(
+        err instanceof ApiError
+          ? err.message
+          : "Couldn't open this CV. Please try again.",
+      );
     } finally {
       setBusyId(null);
     }
@@ -77,31 +107,25 @@ function ApplicantsPageContent() {
   return (
     <>
       <PageHeader title="Applicants" />
-      {isLoading &&
+      {actionError && <InlineError className="mb-4">{actionError}</InlineError>}
+
+      {showSkeleton &&
         Array.from({ length: 3 }).map((_, i) => (
           <Skeleton key={i} className="mb-3 h-28 w-full" />
         ))}
 
-      {!isLoading && error && (
-        <div
-          className="rounded-md border px-4 py-6 text-sm"
-          style={{
-            borderColor: "var(--color-danger)",
-            color: "var(--color-danger)",
-          }}
-        >
-          {error}
-        </div>
+      {!showSkeleton && error && (
+        <InlineError className="py-6">{error}</InlineError>
       )}
 
-      {!isLoading && !error && applicants.length === 0 && (
+      {!showSkeleton && !error && applicants.length === 0 && (
         <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
           No applicants yet.
         </p>
       )}
 
       <div className="divide-y" style={{ borderColor: "var(--color-border)" }}>
-        {!isLoading &&
+        {!showSkeleton &&
           !error &&
           applicants.map((applicant, i) => {
             const nextStatuses = ALLOWED_STATUS_TRANSITIONS[applicant.status];
@@ -158,7 +182,9 @@ function ApplicantsPageContent() {
                       size="sm"
                       disabled={isBusy}
                       onClick={() =>
-                        handleStatusChange(applicant.id, nextStatus)
+                        nextStatus === "rejected"
+                          ? setRejectTarget(applicant)
+                          : handleStatusChange(applicant.id, nextStatus)
                       }
                       style={
                         nextStatus === "rejected"
@@ -175,13 +201,29 @@ function ApplicantsPageContent() {
           })}
       </div>
 
-      {!isLoading && !error && pagination && (
+      {!showSkeleton && !error && pagination && (
         <PaginationControls
           page={pagination.page}
           totalPages={pagination.totalPages}
           onPageChange={setPage}
         />
       )}
+
+      <ConfirmDialog
+        open={rejectTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setRejectTarget(null);
+        }}
+        title="Reject this applicant?"
+        description={`${rejectTarget?.applicant.display_name ?? "This applicant"} will be marked as rejected. This can't be undone.`}
+        confirmLabel="Reject"
+        destructive
+        onConfirm={() =>
+          rejectTarget
+            ? handleStatusChange(rejectTarget.id, "rejected")
+            : undefined
+        }
+      />
     </>
   );
 }
