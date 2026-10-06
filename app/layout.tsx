@@ -1,3 +1,4 @@
+import { ServerWakeupNotice } from "@/components/server-wakeup-notice";
 import type { Metadata, Viewport } from "next";
 import { Archivo, Atkinson_Hyperlegible, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -62,6 +63,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <AuthProvider>
           <TooltipProvider>{children}</TooltipProvider>
+          <ServerWakeupNotice />
         </AuthProvider>
       </body>
     </html>

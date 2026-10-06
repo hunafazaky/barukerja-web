@@ -1,3 +1,4 @@
+import { trackRequest } from "@/lib/server-wakeup";
 import { ApiError, ApiErrorResponse } from "@/types/api";
 
 // Every request goes to "/api/..." on THIS site — never straight to the
@@ -113,6 +114,8 @@ export async function apiFetch<TResponse>(
     }
 
     let response: Response;
+    // Lets the UI show a "waking up the server" page if this takes > 3 s.
+    const done = trackRequest();
     try {
       response = await fetch(`${API_BASE}${path}`, {
         method,
@@ -131,6 +134,8 @@ export async function apiFetch<TResponse>(
         "Can't reach the server. Check your connection and try again.",
         0,
       );
+    } finally {
+      done();
     }
 
     // The backend returns JSON for both successes and errors — but the

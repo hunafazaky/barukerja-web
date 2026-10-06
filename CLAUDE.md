@@ -12,13 +12,13 @@ record wanted API changes in `docs/BACKEND-SUGGESTIONS.md`.
 
 ## Commands
 
-|                     |                                                                                                                           |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `bun install`       | install (a `bun.lock` is committed)                                                                                       |
-| `bun dev`           | dev server (needs `BACKEND_API_URL`, see `.env.example`)                                                                  |
-| `bun run typecheck` | `tsc --noEmit` — must be clean                                                                                            |
-| `bun run lint`      | ESLint — must be clean (0 errors, 0 warnings)                                                                             |
-| `bun run test:e2e`  | Playwright smoke suite against a **mock API** (no DB needed). Sandboxes: `PW_CHROMIUM=/path/to/chromium bun run test:e2e` |
+| | |
+|---|---|
+| `bun install` | install (a `bun.lock` is committed) |
+| `bun dev` | dev server (needs `BACKEND_API_URL`, see `.env.example`) |
+| `bun run typecheck` | `tsc --noEmit` — must be clean |
+| `bun run lint` | ESLint — must be clean (0 errors, 0 warnings) |
+| `bun run test:e2e` | Playwright smoke suite against a **mock API** (no DB needed). Sandboxes: `PW_CHROMIUM=/path/to/chromium bun run test:e2e` |
 
 **Definition of done for any change:** typecheck clean, lint clean, e2e green,
 and — for UI work — looked at in a browser at 375 px and 1280 px.
@@ -28,7 +28,7 @@ and — for UI work — looked at in a browser at 375 px and 1280 px.
 - **Same-origin API proxy.** The browser only calls `/api/...` on this site;
   `next.config.ts` rewrites it to `${BACKEND_API_URL}/api/...` (server-side).
   `app/api/upload/route.ts` is the one real route handler (uploads to R2) and
-  is _not_ forwarded.
+  is *not* forwarded.
 - **Auth.** Access token lives in memory only (`context/AuthContext.tsx`); the
   refresh token is an HttpOnly cookie. On load we silently refresh, decode the
   JWT for the user id, then `GET /users/:id`. `lib/api.ts` → `apiFetch` retries
@@ -37,7 +37,7 @@ and — for UI work — looked at in a browser at 375 px and 1280 px.
     `accessToken` in effect dependencies (it changes every ~15 min and would
     refetch/unmount forms).
 - **Data fetching.** Use `hooks/use-api-query.ts` (`useApiQuery(key, fetcher,
-{auth})`) for every read. It ignores superseded responses, waits for the
+  {auth})`) for every read. It ignores superseded responses, waits for the
   session when `auth` is `"optional"`/`"required"`, dedupes StrictMode double
   effects, and derives loading state (no setState in effects). `key` must change
   whenever the request's inputs change. List hooks (`use-jobs`, `use-bookmarks`,
@@ -65,7 +65,6 @@ and — for UI work — looked at in a browser at 375 px and 1280 px.
   deadline and can't clear several fields (see backend suggestions B5/B6).
 
 ### UI primitives — gotchas
-
 - `Badge` draws no border/padding (just small caps text); `style.borderColor`
   has no effect.
 - `Button` is square-cornered, uppercase, `text-xs`; `sm` is 36 px tall.
@@ -85,15 +84,13 @@ mock API in Chromium at 375 px and 1280 px (2026-10-03). Status: ☐ todo,
 ☑ done.
 
 ### Phase 0 — Safety net ☑
-
 - ☑ Baseline commit, `tsc` clean, ESLint baseline recorded (12 errors, all
   `set-state-in-effect` in fetching code).
 - ☑ `e2e/` Playwright suite + stateful mock API (`e2e/mock-api.mjs`). Written
-  against _correct_ behaviour: **16 failed / 6 passed on the original code**;
+  against *correct* behaviour: **16 failed / 6 passed on the original code**;
   now 22/22.
 
 ### Phase 1 — Crashes, data loss, wrong behaviour ☑ (2026-10-04)
-
 - ☑ P1-01 Null `job` in bookmarks/history/applications crashed the page → `DeletedJobNotice`, types `| null`.
 - ☑ P1-02 `?next=` ignored after sign-in (two competing redirects) + `//host` open-redirect shape → `safeNextPath`, single redirect point. `RequireAuth` no longer adds a stale `?next=` on sign-out.
 - ☑ P1-03 `apiFetch`/`uploadFile` crashed on non-JSON (502 HTML, 413, 204) and on network failure → defensive parsing + friendly messages.
@@ -110,7 +107,6 @@ mock API in Chromium at 375 px and 1280 px (2026-10-03). Status: ☐ todo,
 - ☑ Backend change ideas written down: `docs/BACKEND-SUGGESTIONS.md` (B1–B12).
 
 ### Phase 2 — UI & responsive polish ☐ (CSS/markup only; screenshot before/after)
-
 - ☑ P2-01 Horizontal overflow on mobile (and desktop for a long title): add `min-w-0 break-words` to flex text columns in `job-card`, list rows, applicants (long email), company page, job detail heading, status badges.
 - ☑ P2-02 Double 2 px dividers: drop the manual `border-t` where `divide-y` is used; remove `px-1` indent on `JobCard` (4 px misaligned with headings).
 - ☑ P2-03 Signup: "Confirm Password" wraps and misaligns the two inputs at 375 px (stack on mobile / shorter label).
@@ -125,7 +121,6 @@ mock API in Chromium at 375 px and 1280 px (2026-10-03). Status: ☐ todo,
 - ☑ P2-12 Re-run screenshot sweep at 375 / 768 / 1280.
 
 ### Phase 3 — Hardening & cleanup ☑
-
 - ☑ P3-01 `/api/upload`: require a valid access token, derive extension from validated MIME, wrap `formData()` in try/catch, clear 413/400s; warn client-side above ~4.5 MB on Vercel (or move to presigned uploads — backend B4).
 - ☑ P3-02 Use the `user` already returned by signin/signup (skip the extra `GET /users/:id`).
 - ☑ P3-03 Debounce job search (~300 ms).
@@ -133,25 +128,22 @@ mock API in Chromium at 375 px and 1280 px (2026-10-03). Status: ☐ todo,
 - ☑ P3-05 ApplyForm re-uploads the CV on every retry after a failed submit (orphan files) → reuse the uploaded key.
 - ☑ P3-06 Company page: saving an existing company redirects to `/dashboard/jobs` — confirm intent.
 - ☑ P3-07 Remove dead code: unused `public/*.svg`, `components/ui/sonner` (no Toaster mounted) or mount it, dark tokens (or add a theme provider), self-referential `--font-sans: var(--font-sans)` in `globals.css`.
-- ☑ P3-08 Rewrite `README.md` (still describes a "reading platform"); fix stale comments in `types/user.ts` (signin _does_ return `user`).
+- ☑ P3-08 Rewrite `README.md` (still describes a "reading platform"); fix stale comments in `types/user.ts` (signin *does* return `user`).
 - ☑ P3-09 Accessibility pass: duplicate `<h1>` on auth pages, focus after dialogs, label associations.
 
 ### Out of scope here (API repo) — see `docs/BACKEND-SUGGESTIONS.md`
-
 Email exposure (B1), draft jobs public (B2), orphans on user delete (B3), upload
 auth/presign (B4), clearing fields (B5), deadline semantics (B6), body-size
 limit (B7), rate limiter (B8), refresh revocation (B9), owner views (B10),
 "already applied" (B11), message consistency (B12).
 
 ### Phase 2 notes
-
 - `components/site-loader.tsx` must stay `"use client"` (used from the server component `app/(app)/loading.tsx`; the icon lib breaks otherwise).
 - Shared: `lib/job-format.ts`, `lib/status.ts` + `StatusBadge`, `JobDescription`, `hooks/use-document-title.ts` (call in every page), `app/not-found.tsx`.
 - Long text in flex rows needs `min-w-0` + `wrap-anywhere`; don't combine `divide-y` with `border-t`.
 - `node e2e/screenshots.mjs [outDir] [baseURL]` (with `PW_CHROMIUM`) sweeps 15 pages x 375/768/1280 and fails on horizontal overflow; e2e also has overflow tests at 375 px.
 
 ### Phase 3 notes
-
 - `/api/upload` needs a Bearer token (structural + expiry check only — no secret here; real enforcement = backend B4). `uploadFile(file, kind, accessToken)`. Extension comes from the MIME type; oversize → 413.
 - signin/signup return `user`; refresh does not (`AuthResponse.user` optional).
 - `--font-sans: var(--font-sans)` in globals.css is intentional (next/font runtime var) — do not remove.
@@ -160,10 +152,10 @@ limit (B7), rate limiter (B8), refresh revocation (B9), owner views (B10),
 - P3-09: duplicate `<h1>` on auth pages fixed (wordmark is a `<p>`); all labels already had `htmlFor`.
 
 ## Progress log
-
 - 2026-10-03 — Review of both repos; screenshots + behaviour checks against a mock API (findings above).
 - 2026-10-03 — Phase 0 done: baseline commit, e2e suite (16 red on original code).
 - 2026-10-04 — Phase 1 done: `useApiQuery`, safe redirect, confirm dialogs, null-job guards, job/company form fixes, error boundaries. typecheck + lint clean, e2e 22/22. Added `docs/BACKEND-SUGGESTIONS.md` and this file.
 - 2026-10-04 — Phase 2 done (P2-07 deferred): overflow 11 → 0 page/width combos, titles, shared status/format helpers, loader, not-found. typecheck + lint clean, e2e 29/29. `next build` unverifiable in sandbox (Google Fonts blocked) — run it locally.
 - 2026-10-05 — Phase 3 done: upload hardening, user from signin, debounced search, apply-retry reuse, README rewrite, dead code removed. typecheck + lint clean, e2e 33/33.
 - 2026-10-05 — Follow-ups: "already applied" state on job detail (`use-existing-application`, looks through /applications/mine), `/account` page (edit profile, change password, delete account) + header "Account" link, e2e 36/36. First-time e2e setup on a new machine: `npx playwright install chromium`. CV "File storage is not configured" is an API env issue (see README / BACKEND-SUGGESTIONS), not a frontend bug.
+- 2026-10-06 — Cold-start page: `lib/server-wakeup.ts` (tracks in-flight `apiFetch` calls) + `components/server-wakeup-notice.tsx` mounted in the root layout; shows a full-screen "Waking up the server…" after 3 s of waiting, hides when the API answers. e2e 38/38.
