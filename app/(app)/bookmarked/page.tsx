@@ -26,7 +26,8 @@ function BookmarkedPageContent() {
   const [actionError, setActionError] = useState<string | null>(null);
 
   useClampPage(page, pagination, setPage);
-  const outOfRange = !!pagination && page > Math.max(pagination.totalPages, 1);
+  const outOfRange =
+    !!pagination && page > Math.max(pagination.totalPages, 1);
   const showSkeleton = isLoading || outOfRange;
 
   async function handleRemove(bookmarkId: string, jobId: string) {
@@ -74,7 +75,7 @@ function BookmarkedPageContent() {
         </p>
       )}
 
-      <div className="divide-y" style={{ borderColor: "var(--color-border)" }}>
+      <div className="max-w-3xl divide-y" style={{ borderColor: "var(--color-border)" }}>
         {!showSkeleton &&
           !error &&
           bookmarks.map((bookmark) => (
@@ -103,7 +104,9 @@ function BookmarkedPageContent() {
                     variant="outline"
                     size="sm"
                     disabled={removingId !== null}
-                    onClick={() => handleRemove(bookmark.id, bookmark.job!.id)}
+                    onClick={() =>
+                      handleRemove(bookmark.id, bookmark.job!.id)
+                    }
                   >
                     Remove
                   </Button>
@@ -117,6 +120,7 @@ function BookmarkedPageContent() {
 
       {!showSkeleton && !error && pagination && (
         <PaginationControls
+          className="max-w-3xl"
           page={pagination.page}
           totalPages={pagination.totalPages}
           onPageChange={setPage}

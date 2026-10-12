@@ -63,9 +63,7 @@ function ApplicationsPageContent() {
     setDownloadingId(id);
     setActionError(null);
     try {
-      await openUrlInNewTab(
-        async () => (await getApplicationCvUrl(id, token)).url,
-      );
+      await openUrlInNewTab(async () => (await getApplicationCvUrl(id, token)).url);
     } catch (err) {
       setActionError(
         err instanceof ApiError
@@ -101,7 +99,7 @@ function ApplicationsPageContent() {
         </p>
       )}
 
-      <div className="divide-y" style={{ borderColor: "var(--color-border)" }}>
+      <div className="max-w-3xl divide-y" style={{ borderColor: "var(--color-border)" }}>
         {!showSkeleton &&
           !error &&
           applications.map((application) => (
@@ -161,6 +159,7 @@ function ApplicationsPageContent() {
 
       {!showSkeleton && !error && pagination && (
         <PaginationControls
+          className="max-w-3xl"
           page={pagination.page}
           totalPages={pagination.totalPages}
           onPageChange={setPage}

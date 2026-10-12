@@ -69,9 +69,7 @@ function ApplicantsPageContent() {
     setBusyId(id);
     setActionError(null);
     try {
-      await openUrlInNewTab(
-        async () => (await getApplicationCvUrl(id, token)).url,
-      );
+      await openUrlInNewTab(async () => (await getApplicationCvUrl(id, token)).url);
     } catch (err) {
       setActionError(
         err instanceof ApiError
@@ -103,7 +101,7 @@ function ApplicantsPageContent() {
         </p>
       )}
 
-      <div className="divide-y" style={{ borderColor: "var(--color-border)" }}>
+      <div className="max-w-3xl divide-y" style={{ borderColor: "var(--color-border)" }}>
         {!showSkeleton &&
           !error &&
           applicants.map((applicant) => {
@@ -111,7 +109,10 @@ function ApplicantsPageContent() {
             const isBusy = busyId === applicant.id;
 
             return (
-              <div key={applicant.id} className="py-4">
+              <div
+                key={applicant.id}
+                className="py-4"
+              >
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p
@@ -173,6 +174,7 @@ function ApplicantsPageContent() {
 
       {!showSkeleton && !error && pagination && (
         <PaginationControls
+          className="max-w-3xl"
           page={pagination.page}
           totalPages={pagination.totalPages}
           onPageChange={setPage}

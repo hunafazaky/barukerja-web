@@ -43,11 +43,14 @@ function HistoryPageContent() {
         </p>
       )}
 
-      <div className="divide-y" style={{ borderColor: "var(--color-border)" }}>
+      <div className="max-w-3xl divide-y" style={{ borderColor: "var(--color-border)" }}>
         {!showSkeleton &&
           !error &&
           entries.map((entry) => (
-            <div key={entry.id} className="py-4">
+            <div
+              key={entry.id}
+              className="py-4"
+            >
               {entry.job ? (
                 <>
                   <Link
@@ -74,6 +77,7 @@ function HistoryPageContent() {
 
       {!showSkeleton && !error && pagination && (
         <PaginationControls
+          className="max-w-3xl"
           page={pagination.page}
           totalPages={pagination.totalPages}
           onPageChange={setPage}

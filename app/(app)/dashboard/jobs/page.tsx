@@ -77,11 +77,14 @@ function MyJobsPageContent() {
         </p>
       )}
 
-      <div className="divide-y" style={{ borderColor: "var(--color-border)" }}>
+      <div className="max-w-3xl divide-y" style={{ borderColor: "var(--color-border)" }}>
         {!showSkeleton &&
           !error &&
           jobs.map((job) => (
-            <div key={job.id} className="py-4">
+            <div
+              key={job.id}
+              className="py-4"
+            >
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <Link
@@ -137,6 +140,7 @@ function MyJobsPageContent() {
 
       {!showSkeleton && !error && pagination && (
         <PaginationControls
+          className="max-w-3xl"
           page={pagination.page}
           totalPages={pagination.totalPages}
           onPageChange={setPage}

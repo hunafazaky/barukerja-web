@@ -6,16 +6,18 @@ export function PaginationControls({
   page,
   totalPages,
   onPageChange,
+  className = "",
 }: {
   page: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  className?: string;
 }) {
   if (totalPages <= 1) return null;
 
   return (
     <div
-      className="rule-double mt-8 flex items-center justify-between pt-4"
+      className={`rule-double mt-8 flex items-center justify-between pt-4 ${className}`}
       style={{ borderColor: "var(--color-text)" }}
     >
       <span className="label-caps">
