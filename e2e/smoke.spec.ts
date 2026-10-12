@@ -344,7 +344,7 @@ test.describe("server wake-up", () => {
     await page.goto("/jobs");
     await expect(page.getByTestId("server-wakeup")).toHaveCount(0);
     await expect(page.getByTestId("server-wakeup")).toBeVisible({ timeout: 5000 });
-    await expect(page.getByRole("heading", { name: "Waking up the server…" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "The presses are warming up…" })).toBeVisible();
     await expect(page.getByTestId("server-wakeup")).toHaveCount(0, { timeout: 8000 });
     await expect(page.getByRole("heading", { name: "Senior Backend Engineer" })).toBeVisible();
   });

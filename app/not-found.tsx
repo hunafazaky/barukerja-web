@@ -8,17 +8,13 @@ export const metadata: Metadata = { title: "Page not found" };
 export default function NotFound() {
   return (
     <div className="mx-auto flex min-h-svh max-w-md flex-col items-center justify-center gap-4 px-4 text-center">
-      <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
-        404
-      </p>
-      <h1
-        className="text-2xl font-black"
-        style={{ fontFamily: "var(--font-heading)" }}
-      >
-        Page not found
+      <p className="label-caps">Error 404</p>
+      <h1 className="text-4xl leading-tight font-black">
+        This page has been withdrawn
       </h1>
-      <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
-        The page you&apos;re looking for doesn&apos;t exist or has moved.
+      <p className="text-lg italic" style={{ color: "var(--color-text-muted)" }}>
+        We couldn&apos;t find what you were looking for. It may never have run,
+        or it has moved.
       </p>
       <Button nativeButton={false} render={<Link href="/jobs" />}>
         Browse jobs

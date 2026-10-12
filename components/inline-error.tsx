@@ -10,12 +10,15 @@ export function InlineError({
   return (
     <div
       role="alert"
-      className={`border px-4 py-3 text-sm ${className}`}
+      className={`border px-4 py-3 ${className}`}
       style={{
         borderColor: "var(--color-danger)",
         color: "var(--color-danger)",
       }}
     >
+      <strong className="label-caps mr-2 text-[var(--color-danger)]">
+        Correction —
+      </strong>
       {children}
     </div>
   );

@@ -41,27 +41,27 @@ export function ServerWakeupNotice() {
       style={{ background: "var(--color-bg)" }}
     >
       <p
-        className="text-3xl font-black"
+        className="text-4xl font-black tracking-tight"
         style={{ fontFamily: "var(--font-heading)" }}
       >
         BaruKerja
       </p>
-      <Spinner />
-      <h1 className="text-lg font-bold">Waking up the server…</h1>
-      <p
-        className="max-w-sm text-sm"
-        style={{ color: "var(--color-text-muted)" }}
+      <div
+        className="flex max-w-md flex-col items-center gap-3 border-[3px] border-double px-6 py-8"
+        style={{
+          borderColor: "var(--color-text)",
+          background: "var(--color-bg-sunk)",
+        }}
       >
-        Our server sleeps when it hasn&apos;t been used for a while. It can take
-        up to a minute to start. This page will continue on its own — no need to
-        refresh.
-      </p>
-      <p
-        className="text-xs tabular-nums"
-        style={{ color: "var(--color-text-muted)" }}
-      >
-        Waiting {seconds}s
-      </p>
+        <Spinner />
+        <h1 className="text-2xl font-bold">The presses are warming up…</h1>
+        <p className="text-base" style={{ color: "var(--color-text-muted)" }}>
+          Our server sleeps when it hasn&apos;t been used for a while. It can
+          take up to a minute to start. This page will carry on by itself — no
+          need to refresh.
+        </p>
+        <p className="label-caps font-normal tabular-nums">Waiting {seconds}s</p>
+      </div>
     </div>
   );
 }

@@ -12,17 +12,14 @@ export function PageHeader({
   actions?: React.ReactNode;
 }) {
   return (
-    <div className="mb-6 flex items-start justify-between gap-4">
+    <div className="mb-8 flex items-start justify-between gap-4">
       <div>
-        <h1
-          className="text-3xl font-black"
-          style={{ fontFamily: "var(--font-heading)" }}
-        >
+        <h1 className="text-4xl leading-[1.05] font-black tracking-tight md:text-5xl">
           {title}
         </h1>
         {description && (
           <p
-            className="mt-1 text-sm"
+            className="mt-2 text-lg italic"
             style={{ color: "var(--color-text-muted)" }}
           >
             {description}

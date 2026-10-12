@@ -31,16 +31,17 @@ export function BottomNav() {
   // which destinations exist and where they go.
   const shortLabel: Record<string, string> = {
     "Browse jobs": "Jobs",
-    "My applications": "Applications",
+    "My applications": "Applied",
+    Bookmarked: "Saved",
     "Company profile": "Company",
   };
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 border-t md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t-[3px] border-double md:hidden"
       style={{
         background: "var(--color-bg)",
-        borderColor: "var(--color-border)",
+        borderColor: "var(--color-text)",
         paddingBottom: "env(safe-area-inset-bottom, 0px)",
       }}
     >
@@ -54,7 +55,8 @@ export function BottomNav() {
             <Link
               key={item.url}
               href={item.url}
-              className="flex flex-col items-center justify-center gap-1 text-[11px]"
+              className="label-caps flex flex-col items-center justify-center gap-1 text-[0.6rem] tracking-[0.1em]"
+              aria-current={isActive ? "page" : undefined}
               style={{
                 color: isActive
                   ? "var(--color-brand)"

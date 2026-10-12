@@ -1,3 +1,10 @@
+@import "@fontsource-variable/playfair-display/wght.css";
+@import "@fontsource-variable/playfair-display/wght-italic.css";
+@import "@fontsource-variable/newsreader/wght.css";
+@import "@fontsource-variable/newsreader/wght-italic.css";
+@import "@fontsource-variable/source-serif-4/wght.css";
+@import "@fontsource-variable/fraunces/wght.css";
+@import "@fontsource-variable/fraunces/wght-italic.css";
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -5,34 +12,40 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ==================================================
-   BaruKerja design tokens.
-   Flat design, tuned for long-form reading (job descriptions), not just
-   UI chrome — see CLAUDE.md for the full rationale. These sit alongside
-   the shadcn theme tokens below rather than replacing them; new
-   BaruKerja-specific UI should reach for these directly
-   (bg-[var(--color-bg)], text-[var(--color-danger)], etc.) instead of
-   the generic shadcn tokens. The shadcn tokens (primary, destructive,
-   ring, border, radius) are wired to these further down, so shadcn/ui
-   primitives and hand-styled elements stay visually consistent.
+   BaruKerja design tokens — "newspaper" look (see CLAUDE.md, Phase 4).
+   Warm paper, brown-black ink, and ONE accent (oxblood). Serif type
+   throughout. These sit alongside the shadcn theme tokens below; the
+   shadcn tokens (primary, destructive, ring, border, input) are wired to
+   these so primitives and hand-styled elements stay consistent.
 
-   Naming: the brand colour is --color-brand, NOT --color-accent. Tailwind
-   maps `bg-accent`/`text-accent` to --color-accent (shadcn's neutral hover
-   surface), so defining our teal under that name turned every shadcn
-   hover/focus state (e.g. Select items) solid teal with dark text.
+   Contrast on --color-bg: text 13.4:1, muted 6.0:1, brand 7.0:1.
+   --color-border is for hairlines only (1.8:1); anything that must be
+   perceivable (input underlines) uses --color-rule-strong.
+
+   Naming: the accent is --color-brand, NOT --color-accent. Tailwind maps
+   `bg-accent`/`text-accent` to --color-accent (shadcn's neutral hover
+   surface), so defining our red under that name turned every shadcn
+   hover/focus state solid red.
    ================================================== */
 :root {
-  --color-bg: #faf9f9;
-  --color-text: #1c2321;
-  --color-text-muted: #6b6f6d;
-  --color-border: #dad6cc;
-  --color-brand: #1f6f54;
-  --color-highlight: #b98900;
-  --color-danger: #b3412f;
+  --color-bg: #efe8d6;
+  --color-bg-sunk: #e6dcc3;
+  --color-text: #231f1a;
+  --color-text-muted: #5f5547;
+  --color-border: #bfae88;
+  --color-rule-strong: #7d6f52;
+  --color-brand: #8a2b1c;
+  --color-highlight: #7a4f00;
+  --color-success: #4d5a2e;
+  --color-danger: #8a2b1c;
 
-  /* The base shadcn tokens were never set for light mode in this file
-     (only .dark defined them) — wire them to the BaruKerja tokens above
-     so bg-background/text-foreground utilities carry the flat palette
-     everywhere, not just in components written to use --color-* directly. */
+  /* Type roles. Variable fonts from @fontsource-variable (self-hosted, so
+     the build never needs Google Fonts). */
+  --font-body: "Newsreader Variable", Georgia, "Times New Roman", serif;
+  --font-heading: "Playfair Display Variable", Georgia, "Times New Roman", serif;
+  --font-label: "Source Serif 4 Variable", Georgia, serif;
+  --font-figure: "Fraunces Variable", Georgia, serif;
+
   --background: var(--color-bg);
   --foreground: var(--color-text);
 }
@@ -40,11 +53,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  /* Looks self-referential but isn't: the right-hand side is the runtime
-     variable next/font sets in layout.tsx. Don't remove it. */
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-archivo);
+  --font-sans: var(--font-body);
+  --font-serif: var(--font-body);
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -84,84 +95,106 @@
 }
 
 :root {
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.141 0.005 285.823);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.141 0.005 285.823);
-  /* Wired to the BaruKerja tokens at the top of this file — these were the
-     stock shadcn sky-blue/red/10px defaults, so primary buttons were blue,
-     destructive actions were a different red than every error message, and
-     corners were far rounder than the flat design calls for. */
-  --primary: var(--color-brand);
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.967 0.001 286.375);
-  --secondary-foreground: oklch(0.21 0.006 285.885);
-  --muted: oklch(0.967 0.001 286.375);
-  --muted-foreground: oklch(0.552 0.016 285.938);
-  --accent: oklch(0.967 0.001 286.375);
-  --accent-foreground: oklch(0.21 0.006 285.885);
+  --card: var(--color-bg);
+  --card-foreground: var(--color-text);
+  --popover: var(--color-bg);
+  --popover-foreground: var(--color-text);
+  /* Primary actions are solid ink; oxblood appears on hover (button.tsx). */
+  --primary: var(--color-text);
+  --primary-foreground: var(--color-bg);
+  --secondary: var(--color-bg-sunk);
+  --secondary-foreground: var(--color-text);
+  --muted: var(--color-bg-sunk);
+  --muted-foreground: var(--color-text-muted);
+  --accent: var(--color-bg-sunk);
+  --accent-foreground: var(--color-text);
   --destructive: var(--color-danger);
   --border: var(--color-border);
-  --input: var(--color-border);
+  --input: var(--color-rule-strong);
   --ring: var(--color-brand);
-  --chart-1: oklch(0.879 0.169 91.605);
-  --chart-2: oklch(0.769 0.188 70.08);
-  --chart-3: oklch(0.666 0.179 58.318);
-  --chart-4: oklch(0.555 0.163 48.998);
-  --chart-5: oklch(0.473 0.137 46.201);
-  --radius: 0.25rem; /* ~4px, per the flat design spec */
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.141 0.005 285.823);
-  --sidebar-primary: oklch(0.588 0.158 241.966);
-  --sidebar-primary-foreground: oklch(0.977 0.013 236.62);
-  --sidebar-accent: oklch(0.967 0.001 286.375);
-  --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
-  --sidebar-border: oklch(0.92 0.004 286.32);
-  --sidebar-ring: oklch(0.705 0.015 286.067);
-}
-
-.dark {
-  --background: oklch(0.141 0.005 285.823);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.21 0.006 285.885);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.21 0.006 285.885);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.443 0.11 240.79);
-  --primary-foreground: oklch(0.977 0.013 236.62);
-  --secondary: oklch(0.274 0.006 286.033);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.274 0.006 286.033);
-  --muted-foreground: oklch(0.705 0.015 286.067);
-  --accent: oklch(0.274 0.006 286.033);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.552 0.016 285.938);
-  --chart-1: oklch(0.879 0.169 91.605);
-  --chart-2: oklch(0.769 0.188 70.08);
-  --chart-3: oklch(0.666 0.179 58.318);
-  --chart-4: oklch(0.555 0.163 48.998);
-  --chart-5: oklch(0.473 0.137 46.201);
-  --sidebar: oklch(0.21 0.006 285.885);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.685 0.169 237.323);
-  --sidebar-primary-foreground: oklch(0.293 0.066 243.157);
-  --sidebar-accent: oklch(0.274 0.006 286.033);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.552 0.016 285.938);
+  --chart-1: #8a2b1c;
+  --chart-2: #7a4f00;
+  --chart-3: #4d5a2e;
+  --chart-4: #5f5547;
+  --chart-5: #231f1a;
+  --radius: 0; /* newspapers have square corners */
+  --sidebar: var(--color-bg);
+  --sidebar-foreground: var(--color-text);
+  --sidebar-primary: var(--color-text);
+  --sidebar-primary-foreground: var(--color-bg);
+  --sidebar-accent: var(--color-bg-sunk);
+  --sidebar-accent-foreground: var(--color-text);
+  --sidebar-border: var(--color-border);
+  --sidebar-ring: var(--color-brand);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
-  }
   html {
     @apply font-sans;
+    /* Newsreader runs small; 17px root scales every rem-based size up. */
+    font-size: 106.25%;
   }
+  body {
+    @apply bg-background text-foreground;
+    line-height: 1.6;
+    font-feature-settings: "kern", "liga", "onum";
+    text-rendering: optimizeLegibility;
+  }
+  ::selection {
+    background: var(--color-brand);
+    color: var(--color-bg);
+  }
+  h1, h2, h3 {
+    font-family: var(--font-heading);
+    text-wrap: balance;
+  }
+}
+
+/* Newspaper building blocks (used via className). */
+@layer components {
+  /* Small-caps label above a headline: "FULL-TIME · ON-SITE". */
+  .kicker {
+    font-family: var(--font-label);
+    font-weight: 700;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--color-brand);
+  }
+  /* Neutral small-caps label (metadata, form labels). */
+  .label-caps {
+    font-family: var(--font-label);
+    font-weight: 700;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+  /* Thick-over-thin rule under the masthead and around pull-quotes. */
+  .rule-double {
+    border-top: 3px double var(--color-text);
+  }
+  /* Salary / numbers. */
+  .figure {
+    font-family: var(--font-figure);
+    font-weight: 600;
+    font-style: italic;
+  }
+  .dropcap::first-letter {
+    float: left;
+    font-family: var(--font-heading);
+    font-weight: 900;
+    font-size: 4.4rem;
+    line-height: 0.82;
+    padding: 0.4rem 0.6rem 0 0;
+    color: var(--color-brand);
+  }
+}
+
+@media print {
+  body { background: #fff; }
+  nav, .no-print { display: none !important; }
 }

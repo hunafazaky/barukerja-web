@@ -6,22 +6,19 @@ const BULLET = /^\s*[-*•]\s+/;
 const NUMBERED = /^\s*\d+[.)]\s+/;
 
 type Block =
-  { type: "p"; text: string } | { type: "ul" | "ol"; items: string[] };
+  | { type: "p"; text: string }
+  | { type: "ul" | "ol"; items: string[] };
 
 function parse(text: string): Block[] {
   const blocks: Block[] = [];
-  const paragraphs = text
-    .replace(/\r\n?/g, "\n")
-    .trim()
-    .split(/\n{2,}/);
+  const paragraphs = text.replace(/\r\n?/g, "\n").trim().split(/\n{2,}/);
 
   for (const paragraph of paragraphs) {
     let textLines: string[] = [];
     let list: { type: "ul" | "ol"; items: string[] } | null = null;
 
     const flushText = () => {
-      if (textLines.length)
-        blocks.push({ type: "p", text: textLines.join("\n") });
+      if (textLines.length) blocks.push({ type: "p", text: textLines.join("\n") });
       textLines = [];
     };
     const flushList = () => {
@@ -47,17 +44,29 @@ function parse(text: string): Block[] {
   return blocks;
 }
 
-export function JobDescription({ text }: { text: string }) {
+export function JobDescription({
+  text,
+  dropcap = false,
+}: {
+  text: string;
+  // Drop cap on the first paragraph (article style, job detail page).
+  dropcap?: boolean;
+}) {
   const blocks = parse(text);
 
   return (
     <div
-      className="space-y-4 text-[15px] leading-relaxed wrap-anywhere"
+      className="space-y-5 text-[1.15rem] leading-[1.7] wrap-anywhere"
       style={{ color: "var(--color-text)" }}
     >
       {blocks.map((block, i) =>
         block.type === "p" ? (
-          <p key={i} className="whitespace-pre-line">
+          <p
+            key={i}
+            className={`whitespace-pre-line ${
+              dropcap && i === 0 && block.text.length > 140 ? "dropcap" : ""
+            }`}
+          >
             {block.text}
           </p>
         ) : block.type === "ul" ? (

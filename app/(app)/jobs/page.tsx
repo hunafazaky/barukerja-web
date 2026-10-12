@@ -17,11 +17,7 @@ function JobsPageContent() {
   const [q, setQ] = useState("");
   // Query the API 300 ms after the last keystroke, not on every one.
   const debouncedQ = useDebouncedValue(q.trim(), 300);
-  const jobsData = useJobs({
-    page,
-    q: debouncedQ || undefined,
-    sort: "newest",
-  });
+  const jobsData = useJobs({ page, q: debouncedQ || undefined, sort: "newest" });
   useClampPage(page, jobsData.pagination, setPage);
 
   return (
@@ -30,24 +26,35 @@ function JobsPageContent() {
         title="Find work"
         description="Open positions, newest first."
       />
-      <Input
-        type="search"
-        placeholder="Search job titles or descriptions"
-        value={q}
-        onChange={(e) => {
-          setQ(e.target.value);
-          // replace, not push: resetting to page 1 while typing is a
-          // correction, not a navigation worth a Back-button stop.
-          if (page !== 1) setPage(1, { replace: true });
-        }}
-        className="mb-8 max-w-sm"
-      />
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+        <p className="label-caps font-normal" aria-live="polite">
+          {jobsData.pagination
+            ? `Today · ${jobsData.pagination.total} open ${
+                jobsData.pagination.total === 1 ? "position" : "positions"
+              }`
+            : "\u00a0"}
+        </p>
+        <Input
+          type="search"
+          aria-label="Search jobs"
+          placeholder="Search the classifieds…"
+          value={q}
+          onChange={(e) => {
+            setQ(e.target.value);
+            // replace, not push: resetting to page 1 while typing is a
+            // correction, not a navigation worth a Back-button stop.
+            if (page !== 1) setPage(1, { replace: true });
+          }}
+          className="max-w-xs"
+        />
+      </div>
 
       <JobListSection
         title="Open jobs"
         emptyMessage="No open jobs match your search right now."
         data={jobsData}
         onPageChange={setPage}
+        frontPage
       />
     </>
   );

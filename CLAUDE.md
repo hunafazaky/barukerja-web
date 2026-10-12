@@ -73,9 +73,11 @@ and — for UI work — looked at in a browser at 375 px and 1280 px.
 - Tailwind v4 `divide-y` already adds borders — don't add `border-t` too.
 - Design tokens are CSS variables in `app/globals.css` (`--color-bg`,
   `--color-text`, `--color-text-muted`, `--color-border`, `--color-brand`,
-  `--color-highlight`, `--color-danger`); shadcn tokens map onto them. Fonts:
-  Atkinson Hyperlegible (body), Archivo (headings). Dark-mode tokens exist but
-  nothing applies the `.dark` class yet.
+  `--color-highlight`, `--color-danger`); shadcn tokens map onto them. Fonts (self-hosted
+  `@fontsource-variable`, imported in `globals.css`): Playfair Display
+  (`--font-heading`, headlines), Newsreader (`--font-body`), Source Serif 4
+  (`--font-label`, small caps/buttons), Fraunces (`--font-figure`, salaries).
+  No dark mode (the `.dark` tokens were removed in Phase 4).
 
 ## Plan & progress
 
@@ -131,6 +133,16 @@ mock API in Chromium at 375 px and 1280 px (2026-10-03). Status: ☐ todo,
 - ☑ P3-08 Rewrite `README.md` (still describes a "reading platform"); fix stale comments in `types/user.ts` (signin *does* return `user`).
 - ☑ P3-09 Accessibility pass: duplicate `<h1>` on auth pages, focus after dialogs, label associations.
 
+### Phase 4 — Newspaper look ☑ (2026-10-11)
+Direction approved from a mockup: warm paper, ink, one oxblood accent, serif type, ruled layout, square corners, no dark mode.
+- ☑ P4-01 Tokens + fonts: `--color-bg #efe8d6`, `--color-bg-sunk #e6dcc3`, ink `#231f1a`, muted `#5f5547`, brand/danger oxblood `#8a2b1c`, success olive, highlight amber; shadcn tokens wired to them; html font-size 106.25%. Contrast on paper: ink 13.4, muted 6.0, oxblood 7.0, amber 5.8, olive 6.1; `--color-border` is hairlines only, inputs use `--color-rule-strong` (4.0).
+- ☑ P4-02 Masthead (`site-nav.tsx`): dateline (date from the browser via `useSyncExternalStore`; issue no. = day of year), nameplate, double rule, section bar (md+); bottom tab bar restyled; shell widened to `max-w-5xl`.
+- ☑ P4-03 Job list: `JobCard` story/lead variants, `JobListSection frontPage` (lead story + two ruled columns, page 1 only), excerpts via `jobExcerpt()`.
+- ☑ P4-04 Job detail: article layout, drop cap, compensation pull-quote, dashed "application" coupon (holds `ApplyCta`).
+- ☑ P4-05 Primitives: ink buttons (oxblood on hover), ink-outline ghost, oxblood destructive, label font, thicker underlines; `StatusBadge` = rubber stamp; `InlineError` prefixes "Correction —"; pagination ruled; wake-up page "The presses are warming up…"; 404 "This page has been withdrawn"; empty state "Nothing to report".
+- ☑ P4-06 Verified: tsc + lint clean, e2e 38/38, no overflow at 375/768/1280, screenshot sweep reviewed.
+- Notes: keep every job title an `<h3>` (e2e depends on it); fonts no longer come from Google, so `next build` works offline.
+
 ### Out of scope here (API repo) — see `docs/BACKEND-SUGGESTIONS.md`
 Email exposure (B1), draft jobs public (B2), orphans on user delete (B3), upload
 auth/presign (B4), clearing fields (B5), deadline semantics (B6), body-size
@@ -159,3 +171,4 @@ limit (B7), rate limiter (B8), refresh revocation (B9), owner views (B10),
 - 2026-10-05 — Phase 3 done: upload hardening, user from signin, debounced search, apply-retry reuse, README rewrite, dead code removed. typecheck + lint clean, e2e 33/33.
 - 2026-10-05 — Follow-ups: "already applied" state on job detail (`use-existing-application`, looks through /applications/mine), `/account` page (edit profile, change password, delete account) + header "Account" link, e2e 36/36. First-time e2e setup on a new machine: `npx playwright install chromium`. CV "File storage is not configured" is an API env issue (see README / BACKEND-SUGGESTIONS), not a frontend bug.
 - 2026-10-06 — Cold-start page: `lib/server-wakeup.ts` (tracks in-flight `apiFetch` calls) + `components/server-wakeup-notice.tsx` mounted in the root layout; shows a full-screen "Waking up the server…" after 3 s of waiting, hides when the API answers. e2e 38/38.
+- 2026-10-11 — Phase 4 done: newspaper look (see Phase 4 above). Fonts moved to self-hosted @fontsource-variable. e2e 38/38.

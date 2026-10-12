@@ -7,7 +7,7 @@ type Tone = "neutral" | "brand" | "highlight" | "danger";
 
 const TONE_COLOR: Record<Tone, string> = {
   neutral: "var(--color-text-muted)",
-  brand: "var(--color-brand)",
+  brand: "var(--color-success)",
   highlight: "var(--color-highlight)",
   danger: "var(--color-danger)",
 };
@@ -47,7 +47,8 @@ export function StatusBadge(props: Props) {
 
   return (
     <span
-      className="inline-flex shrink-0 items-center border px-2 py-0.5 text-[0.625rem] font-semibold tracking-widest whitespace-nowrap uppercase"
+      // A rubber stamp: heavy outline, spaced capitals, a slight tilt.
+      className="inline-flex shrink-0 -rotate-2 items-center border-2 px-2 py-px font-label text-[0.7rem] font-bold tracking-[0.18em] whitespace-nowrap uppercase"
       style={{ color, borderColor: color }}
     >
       {label}

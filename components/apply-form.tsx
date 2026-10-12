@@ -72,8 +72,7 @@ export function ApplyForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="mt-2 space-y-4 border p-4"
-      style={{ borderColor: "var(--color-border)" }}
+      className="space-y-4"
     >
       <div>
         <FieldLabel htmlFor="cv-upload">CV (PDF)</FieldLabel>

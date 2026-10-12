@@ -14,8 +14,11 @@ export function PaginationControls({
   if (totalPages <= 1) return null;
 
   return (
-    <div className="mt-6 flex items-center justify-between text-sm">
-      <span style={{ color: "var(--color-text-muted)" }}>
+    <div
+      className="rule-double mt-8 flex items-center justify-between pt-4"
+      style={{ borderColor: "var(--color-text)" }}
+    >
+      <span className="label-caps">
         Page {page} of {totalPages}
       </span>
       <div className="flex gap-2">
@@ -25,7 +28,7 @@ export function PaginationControls({
           disabled={page <= 1}
           onClick={() => onPageChange(page - 1)}
         >
-          Previous
+          ← Previous
         </Button>
         <Button
           variant="outline"
@@ -33,7 +36,7 @@ export function PaginationControls({
           disabled={page >= totalPages}
           onClick={() => onPageChange(page + 1)}
         >
-          Next
+          Next →
         </Button>
       </div>
     </div>

@@ -7,7 +7,6 @@ import Link from "next/link";
 import { ApplyForm } from "@/components/apply-form";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/context/AuthContext";
 import { InlineError } from "@/components/inline-error";
@@ -18,6 +17,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { getJobById } from "@/lib/job.api";
 import { JobDescription } from "@/components/job-description";
 import {
+  formatPostedAt,
   formatSalary,
   JOB_TYPE_LABELS,
   WORK_MODE_LABELS,
@@ -39,7 +39,7 @@ function getApplyState(job: Job): "open" | "draft" | "closed" | "expired" {
 }
 
 export default function JobDetailPage() {
-  const { id } = useParams<{ id: string }>();
+    const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { user } = useAuth();
 
@@ -63,8 +63,7 @@ export default function JobDetailPage() {
     <>
       <Link
         href="/jobs"
-        className="inline-flex min-h-10 items-center text-sm"
-        style={{ color: "var(--color-text-muted)" }}
+        className="label-caps inline-flex min-h-10 items-center hover:text-[var(--color-brand)]"
       >
         ← Back to jobs
       </Link>
@@ -77,113 +76,162 @@ export default function JobDetailPage() {
         </div>
       )}
 
-      {!isLoading && error && (
-        <InlineError className="mt-6 py-6">{error}</InlineError>
-      )}
+      {!isLoading && error && <InlineError className="mt-6 py-6">{error}</InlineError>}
 
       {!isLoading && !error && job && (
         <>
-          <div className="mt-4 flex items-start justify-between gap-4">
-            <div className="min-w-0">
-              <h1
-                className="text-2xl font-black sm:text-3xl"
-                style={{ fontFamily: "var(--font-heading)" }}
-              >
-                {job.title}
-              </h1>
-              <Link
-                href={`/companies/${job.company.id}`}
-                className="mt-1 inline-block py-1 text-sm font-medium hover:underline"
-                style={{ color: "var(--color-brand)" }}
-              >
-                {job.company.name}
-              </Link>
-            </div>
-
-            {/* Bookmarks are a seeker feature: the API doesn't stop an
-                employer from creating one, but the employer nav has no
-                "Bookmarked" page, so they'd save jobs they can never
-                view. Signed-out visitors still see the (disabled) button
-                as a nudge to sign in. */}
-            {user?.role !== "employer" && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="shrink-0"
-                disabled={!bookmark.isSignedIn || bookmark.isToggling}
-                onClick={bookmark.toggle}
-                title={
-                  bookmark.isSignedIn
-                    ? undefined
-                    : "Sign in to bookmark this job"
-                }
-              >
-                {bookmark.isBookmarked ? "Bookmarked" : "Bookmark"}
-              </Button>
-            )}
-          </div>
-
-          {bookmark.error && (
-            <InlineError className="mt-3">{bookmark.error}</InlineError>
-          )}
-
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Badge variant="outline">{WORK_MODE_LABELS[job.work_mode]}</Badge>
-            <Badge variant="outline">{JOB_TYPE_LABELS[job.job_type]}</Badge>
-            {job.experience_level && (
-              <Badge variant="outline">{job.experience_level}</Badge>
-            )}
-            {job.status === "draft" && <Badge variant="outline">Draft</Badge>}
-            {job.status === "closed" && (
-              <Badge
-                style={{
-                  borderColor: "var(--color-danger)",
-                  color: "var(--color-danger)",
-                }}
-                variant="outline"
-              >
-                Closed
-              </Badge>
-            )}
-          </div>
-
-          <p
-            className="mt-3 text-sm"
-            style={{ color: "var(--color-text-muted)" }}
+          <header
+            className="mt-2 border-b-[3px] border-double pb-6"
+            style={{ borderColor: "var(--color-text)" }}
           >
-            {job.location ? `${job.location} · ` : ""}
-            {formatSalary(job) ?? "Salary not listed"}
-            {job.deadline &&
-              ` · Apply by ${new Date(job.deadline).toLocaleDateString()}`}
-          </p>
+            <p className="kicker">
+              {[
+                JOB_TYPE_LABELS[job.job_type],
+                WORK_MODE_LABELS[job.work_mode],
+                job.experience_level,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+            </p>
+            <h1 className="mt-3 text-[2.1rem] leading-[1.05] font-black tracking-tight sm:text-5xl md:text-6xl">
+              {job.title}
+            </h1>
+            <div className="mt-4 flex flex-wrap items-end justify-between gap-4">
+              <p
+                className="min-w-0 text-lg italic"
+                style={{ color: "var(--color-text-muted)" }}
+              >
+                Posted by{" "}
+                <Link
+                  href={`/companies/${job.company.id}`}
+                  className="font-semibold not-italic hover:underline"
+                  style={{ color: "var(--color-brand)" }}
+                >
+                  {job.company.name}
+                </Link>
+                {job.location ? ` · ${job.location}` : ""} ·{" "}
+                {formatPostedAt(job.createdAt).replace("Posted ", "")}
+                {job.status === "draft" && (
+                  <span className="ml-3 not-italic">
+                    <Badge variant="outline">Draft</Badge>
+                  </span>
+                )}
+                {job.status === "closed" && (
+                  <span
+                    className="ml-3 not-italic"
+                    style={{ color: "var(--color-danger)" }}
+                  >
+                    <Badge variant="outline" className="text-[var(--color-danger)]">
+                      Closed
+                    </Badge>
+                  </span>
+                )}
+              </p>
 
-          <Separator className="my-6" />
-
-          <JobDescription text={job.description} />
-
-          {job.categories.length > 0 && (
-            <div className="mt-6 flex flex-wrap gap-2">
-              {job.categories.map((category) => (
-                <Badge key={category} variant="secondary">
-                  {category}
-                </Badge>
-              ))}
+              {/* Bookmarks are a seeker feature: the API doesn't stop an
+                  employer from creating one, but the employer nav has no
+                  "Bookmarked" page, so they'd save jobs they can never
+                  view. Signed-out visitors still see the (disabled) button
+                  as a nudge to sign in. */}
+              {user?.role !== "employer" && (
+                <Button
+                  variant="outline"
+                  className="shrink-0"
+                  disabled={!bookmark.isSignedIn || bookmark.isToggling}
+                  onClick={bookmark.toggle}
+                  title={
+                    bookmark.isSignedIn
+                      ? undefined
+                      : "Sign in to bookmark this job"
+                  }
+                >
+                  {bookmark.isBookmarked ? "Bookmarked" : "Bookmark"}
+                </Button>
+              )}
             </div>
-          )}
+            {bookmark.error && (
+              <InlineError className="mt-3">{bookmark.error}</InlineError>
+            )}
+          </header>
 
-          <Separator className="my-6" />
+          <div className="grid gap-10 pt-8 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-0">
+            <article
+              className="min-w-0 lg:border-r lg:pr-12"
+              style={{ borderColor: "var(--color-border)" }}
+            >
+              <div className="max-w-[40rem]">
+                <JobDescription text={job.description} dropcap />
 
-          <ApplyCta
-            jobId={job.id}
-            applyState={getApplyState(job)}
-            userRole={user?.role ?? null}
-            isEmployerViewingOwnJob={
-              !!user && user.role === "employer" && job.posted_by.id === user.id
-            }
-            onSignInRequired={() =>
-              router.push(`/auth/signin?next=/jobs/${job.id}`)
-            }
-          />
+                {job.categories.length > 0 && (
+                  <div
+                    className="mt-8 flex flex-wrap gap-2 border-t pt-4"
+                    style={{ borderColor: "var(--color-border)" }}
+                  >
+                    {job.categories.map((category) => (
+                      <span
+                        key={category}
+                        className="label-caps border px-2.5 py-0.5 font-normal"
+                        style={{ borderColor: "var(--color-rule-strong)" }}
+                      >
+                        {category}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </article>
+
+            <aside className="lg:pl-10">
+              <p className="kicker">Compensation</p>
+              <p className="rule-double figure mt-2 border-b-[3px] border-double py-3.5 text-[1.9rem] leading-tight"
+                style={{ borderBottomColor: "var(--color-text)" }}
+              >
+                {formatSalary(job) ?? "Salary not listed"}
+              </p>
+
+              <dl className="mt-6 grid grid-cols-[auto_1fr] gap-x-5 gap-y-2.5">
+                <dt className="label-caps pt-1">Type</dt>
+                <dd>{JOB_TYPE_LABELS[job.job_type]}</dd>
+                <dt className="label-caps pt-1">Mode</dt>
+                <dd>{WORK_MODE_LABELS[job.work_mode]}</dd>
+                {job.experience_level && (
+                  <>
+                    <dt className="label-caps pt-1">Level</dt>
+                    <dd>{job.experience_level}</dd>
+                  </>
+                )}
+                {job.deadline && (
+                  <>
+                    <dt className="label-caps pt-1">Apply by</dt>
+                    <dd>{new Date(job.deadline).toLocaleDateString()}</dd>
+                  </>
+                )}
+              </dl>
+
+              <div
+                className="mt-8 border-2 border-dashed p-5"
+                style={{
+                  borderColor: "var(--color-text)",
+                  background: "var(--color-bg-sunk)",
+                }}
+              >
+                <p className="kicker mb-3">Application</p>
+                <ApplyCta
+                  jobId={job.id}
+                  applyState={getApplyState(job)}
+                  userRole={user?.role ?? null}
+                  isEmployerViewingOwnJob={
+                    !!user &&
+                    user.role === "employer" &&
+                    job.posted_by.id === user.id
+                  }
+                  onSignInRequired={() =>
+                    router.push(`/auth/signin?next=/jobs/${job.id}`)
+                  }
+                />
+              </div>
+            </aside>
+          </div>
         </>
       )}
     </>
@@ -235,7 +283,7 @@ function ApplyCta({
       <div>
         <Button disabled>Applications closed</Button>
         <p
-          className="mt-2 text-sm"
+          className="mt-3 italic"
           style={{ color: "var(--color-text-muted)" }}
         >
           {reason}.

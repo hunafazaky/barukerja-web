@@ -49,3 +49,19 @@ export function formatPostedAt(dateString: string): string {
   const months = Math.floor(days / 30);
   return months === 1 ? "Posted 1 month ago" : `Posted ${months} months ago`;
 }
+
+// A short teaser for list pages: the first paragraph of the description with
+// list markers removed (the card clamps it to a couple of lines).
+export function jobExcerpt(description: string | undefined): string {
+  if (!description) return "";
+  const first =
+    description
+      .replace(/\r\n?/g, "\n")
+      .split(/\n{2,}/)
+      .map((p) => p.trim())
+      .find(Boolean) ?? "";
+  return first
+    .replace(/^\s*(?:[-*•]|\d+[.)])\s+/gm, "")
+    .replace(/\s*\n\s*/g, " ")
+    .slice(0, 400);
+}
